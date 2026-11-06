@@ -6,10 +6,12 @@ export interface SessionOptions {
   voice: string;
 }
 
-/** Session configuration shared by WebRTC sessions and accepted SIP calls. */
+/**
+ * Session configuration shared by WebRTC sessions and accepted SIP calls.
+ * `audio.format` is omitted on purpose: WebRTC and SIP negotiate it on the media transport.
+ */
 export function buildSessionConfig(config: Config, options: SessionOptions) {
   return {
-    type: "live",
     model: config.model,
     instructions: config.instructions,
     audio: { output: { voice: options.voice } },
@@ -61,8 +63,9 @@ export async function acceptSipCall(
   options: SessionOptions,
   fetchImpl: typeof fetch = fetch,
 ): Promise<void> {
+  // `type: "live"` belongs to the accept schema only (the create schema has no such field).
   await postJson(config, `/v1/live/sessions/${encodeURIComponent(sessionId)}/accept`, {
-    session: buildSessionConfig(config, options),
+    session: { type: "live", ...buildSessionConfig(config, options) },
   }, fetchImpl);
 }
 

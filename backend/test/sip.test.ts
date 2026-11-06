@@ -15,6 +15,8 @@ function deliver(app: ReturnType<typeof makeApp>["app"], body: string, id = "wh_
 describe("callerNumber", () => {
   it.each([
     [ANDREA, "+393331234567"],
+    ["sip:+14155550123@sip.example.com", "+14155550123"],
+    ["<sip:alice@example.com>;tag=abc123", undefined],
     ["<sip:+39 333 123 4567@pstn.example.com>", "+393331234567"],
     ["<tel:+393331234567>", "+393331234567"],
     ["sip:00393331234567@pstn.example.com;tag=1", "+393331234567"],
@@ -91,7 +93,7 @@ describe("POST /sip/webhook", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]!.url).toBe("https://openai.test/v1/live/sessions/live_sip_1/accept");
     expect(calls[0]!.body).toMatchObject({
-      session: { model: "gpt-live-1", audio: { output: { voice: "marin" } } },
+      session: { type: "live", model: "gpt-live-1", audio: { output: { voice: "marin" } } },
     });
     expect(JSON.stringify(logs)).not.toContain("+393331234567");
   });

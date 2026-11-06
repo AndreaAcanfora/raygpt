@@ -5,6 +5,7 @@
 
 const PRICE_PER_MINUTE_USD = 0.05;
 const CLOSE_TIMEOUT_MS = 3000;
+const ICE_GATHERING_TIMEOUT_MS = 10_000;
 const NEW_LINE_GAP_MS = 1500;
 
 const $ = (id) => document.getElementById(id);
@@ -72,8 +73,8 @@ async function start() {
   const pc = new RTCPeerConnection();
   session.pc = pc;
   pc.ontrack = (event) => {
-    ui.remote.srcObject = event.streams[0];
-    ui.remote.play().catch(() => {});
+    ui.remote.srcObject = event.streams[0] ?? new MediaStream([event.track]);
+    ui.remote.play().catch(() => setStatus("Tocca la pagina per sentire l’assistente"));
   };
   pc.onconnectionstatechange = () => {
     logEvent(`connessione: ${pc.connectionState}`);
@@ -89,11 +90,13 @@ async function start() {
   setStatus("Creazione della sessione…");
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
+  // As in OpenAI's WebRTC guide: send the offer once ICE gathering is complete (or after 10 s).
+  await waitForIceGathering(pc, ICE_GATHERING_TIMEOUT_MS);
 
   const response = await fetch("/api/session", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ sdp: offer.sdp, voice: ui.voice.value }),
+    body: JSON.stringify({ sdp: pc.localDescription.sdp, voice: ui.voice.value }),
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(describeError(response.status, body));
@@ -274,6 +277,20 @@ function seconds(ms) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function waitForIceGathering(pc, timeoutMs) {
+  if (pc.iceGatheringState === "complete") return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => {
+      pc.removeEventListener("icegatheringstatechange", onChange);
+      clearTimeout(timer);
+      resolve();
+    };
+    const onChange = () => pc.iceGatheringState === "complete" && done();
+    const timer = setTimeout(done, timeoutMs);
+    pc.addEventListener("icegatheringstatechange", onChange);
+  });
 }
 
 function beep(context, frequency, duration) {

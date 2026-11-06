@@ -27,6 +27,10 @@ describe("POST /api/session", () => {
       session: { model: "gpt-live-1", audio: { output: { voice: "cedar" } } },
       transport: { type: "webrtc", sdp: OFFER_SDP },
     });
+    // The create schema has no session.type and audio.format is negotiated by WebRTC.
+    const session = (calls[0]!.body as { session: Record<string, unknown> }).session;
+    expect(session).not.toHaveProperty("type");
+    expect(session.audio).not.toHaveProperty("format");
     expect(logs.map((log) => log.event)).toContain("session.created");
   });
 
