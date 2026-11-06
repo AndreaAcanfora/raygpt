@@ -15,6 +15,11 @@ export interface Config {
   webhookSecret?: string;
   /** Normalized E.164 numbers allowed to call RayGPT over SIP. Empty means reject every call. */
   sipCallerAllowlist: string[];
+  /**
+   * Backend model that GPT-Live delegates web searches to (Responses API with the web_search
+   * tool). Undefined disables web search.
+   */
+  webSearchModel?: string;
   /** Upper bound on GPT-Live sessions created per rolling 24 hours (WebRTC + SIP). */
   maxSessionsPerDay: number;
   port: number;
@@ -45,6 +50,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     appToken,
     webhookSecret: env.OPENAI_WEBHOOK_SECRET?.trim() || undefined,
     sipCallerAllowlist: parseAllowlist(env.SIP_CALLER_ALLOWLIST),
+    webSearchModel: env.OPENAI_WEB_SEARCH_MODEL?.trim() || undefined,
     maxSessionsPerDay: positiveInt(env, "MAX_SESSIONS_PER_DAY", 50),
     port: positiveInt(env, "PORT", 8787),
   };

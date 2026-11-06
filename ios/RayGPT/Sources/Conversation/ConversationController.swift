@@ -171,6 +171,12 @@ final class ConversationController {
             }
         case .error(let message):
             status = "Errore GPT-Live: \(message)"
+        case .delegationStarted:
+            lastActivity = Date()
+            status = "Sto cercando…"
+        case .delegationFinished:
+            lastActivity = Date()
+            if phase == .active { status = isMuted ? "Microfono silenziato" : "In ascolto: parla pure" }
         case .other:
             break
         }
