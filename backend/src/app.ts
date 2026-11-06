@@ -30,6 +30,26 @@ export function createApp({ config, fetch: fetchImpl = fetch, log = jsonLogger, 
 
   app.get("/health", (c) => c.json({ ok: true, model: config.model }));
 
+  // Universal link for Meta AI callbacks (Wearables Developer Center → iOS → Universal link):
+  // https://<backend>/meta/callback opens the RayGPT app when APPLE_TEAM_ID is set.
+  app.get("/.well-known/apple-app-site-association", (c) => {
+    if (!config.appleTeamId) return c.json({ error: "apple_team_id_not_configured" }, 404);
+    return c.json({
+      applinks: {
+        details: [{
+          appIDs: [`${config.appleTeamId}.${config.iosBundleId}`],
+          components: [{ "/": "/meta/*" }],
+        }],
+      },
+    });
+  });
+
+  // Reached only when the app is not installed: universal links open the app directly.
+  app.get("/meta/*", (c) => c.html(
+    "<!doctype html><meta charset=utf-8><title>RayGPT</title>"
+      + "<p>Apri questo link dall’iPhone con l’app RayGPT installata.</p>",
+  ));
+
   app.get("/api/voices", (c) => c.json({ voices: VOICES, default: config.defaultVoice }));
 
   app.post("/api/session", bodyLimit({ maxSize: 256 * 1024 }), async (c) => {

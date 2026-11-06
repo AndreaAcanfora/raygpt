@@ -20,6 +20,10 @@ export interface Config {
    * tool). Undefined disables web search.
    */
   webSearchModel?: string;
+  /** Apple Team ID for the universal link file (apple-app-site-association). */
+  appleTeamId?: string;
+  /** Bundle identifier of the iOS app. */
+  iosBundleId: string;
   /** Upper bound on GPT-Live sessions created per rolling 24 hours (WebRTC + SIP). */
   maxSessionsPerDay: number;
   port: number;
@@ -51,6 +55,8 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     webhookSecret: env.OPENAI_WEBHOOK_SECRET?.trim() || undefined,
     sipCallerAllowlist: parseAllowlist(env.SIP_CALLER_ALLOWLIST),
     webSearchModel: env.OPENAI_WEB_SEARCH_MODEL?.trim() || undefined,
+    appleTeamId: parseTeamId(env.APPLE_TEAM_ID),
+    iosBundleId: env.IOS_BUNDLE_ID?.trim() || "com.andreaacanfora.raygpt.app",
     maxSessionsPerDay: positiveInt(env, "MAX_SESSIONS_PER_DAY", 50),
     port: positiveInt(env, "PORT", 8787),
   };
@@ -69,6 +75,13 @@ function positiveInt(env: Record<string, string | undefined>, name: string, fall
   if (!Number.isInteger(value) || value <= 0) {
     throw new ConfigError(`${name} must be a positive integer`);
   }
+  return value;
+}
+
+function parseTeamId(raw: string | undefined): string | undefined {
+  const value = raw?.trim();
+  if (!value) return undefined;
+  if (!/^[A-Z0-9]{10}$/.test(value)) throw new ConfigError("APPLE_TEAM_ID must be 10 uppercase letters or digits");
   return value;
 }
 
