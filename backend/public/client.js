@@ -172,6 +172,10 @@ function handleEvent(event) {
     case "session.input_transcript.delta":
       session.lastUserDeltaAt = now;
       appendTranscript("user", event.delta, now);
+      if (isStopCommand(session.lastLine?.textContent)) {
+        stop("voice_command");
+        return;
+      }
       break;
     case "session.output_transcript.delta":
       if (session.lastSpeaker === "user" && session.lastUserDeltaAt) {
@@ -228,6 +232,20 @@ function checkLimits() {
   if (now - session.lastActivityAt > Number(ui.idle.value) * 1000) stop("idle");
   else if (now - session.startedAt > Number(ui.maxMinutes.value) * 60_000) stop("max_duration");
   else renderStats(session);
+}
+
+// --- Voice commands --------------------------------------------------------
+
+// "Stop RayGPT" / "Chiudi RayGPT" (also "ferma", "termina", "spegni", in either order) close the conversation.
+// Transcripts spell the name in many ways ("Ray GPT", "rei gpt", "Ray gipiti"), so the text is
+// folded to lowercase letters and digits before matching.
+const STOP_COMMAND =
+  /(stop+|chiudi|ferma|termina|spegni)r[aeiy]+(g|j)[ie]?(p|b)[ie]?t|r[aeiy]+(g|j)[ie]?(p|b)[ie]?t(stop+|chiudi|ferma|termina|spegni)/;
+
+function isStopCommand(text) {
+  if (!text) return false;
+  const folded = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return STOP_COMMAND.test(folded);
 }
 
 // --- Microphones -----------------------------------------------------------
@@ -307,6 +325,7 @@ function describeReason(reason) {
     remote_hangup: "chiusa da OpenAI",
     connection_lost: "connessione persa",
     error: "errore",
+    voice_command: "comando vocale",
   };
   return reasons[reason] ?? reason ?? "motivo sconosciuto";
 }
