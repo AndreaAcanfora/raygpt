@@ -35,3 +35,10 @@ describe("loadConfig", () => {
       .toEqual(["+393331234567", "+41791234567"]);
   });
 });
+
+describe("universal link", () => {
+  it("validates APPLE_TEAM_ID", () => {
+    expect(loadConfig({ ...base, APPLE_TEAM_ID: "ABCDE12345" }).appleTeamId).toBe("ABCDE12345");
+    expect(() => loadConfig({ ...base, APPLE_TEAM_ID: "abc" })).toThrow(/APPLE_TEAM_ID/);
+  });
+});
