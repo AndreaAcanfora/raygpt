@@ -168,6 +168,21 @@ avviato sul Mac con un tunnel HTTPS.
 
 ---
 
+## Fase 6 — M5–M6: app iOS RayGPT
+
+Con l’app di [`ios/RayGPT`](../ios/RayGPT/README.md) e il backend pubblicato in HTTPS.
+
+- [ ] L’app compila e si installa sull’iPhone (annotare eventuali errori di Xcode)
+- [ ] “Avvia” apre una chiamata CallKit e arriva a “In ascolto”
+- [ ] Route audio: ingresso e uscita sugli occhiali (`BluetoothHFP`)
+- [ ] 10 minuti di conversazione senza auto-interruzioni da eco
+- [ ] 30 minuti a schermo bloccato senza cadute
+- [ ] Chiusura dalla schermata di blocco e con il tocco sugli occhiali (fine chiamata)
+- [ ] “Ehi Siri, avvia RayGPT” e tasto Azione funzionano a schermo bloccato
+- [ ] Chiamata telefonica in arrivo durante la conversazione: comportamento annotato
+
+---
+
 ## Registro risultati
 
 | Test | Data | Versioni (iOS / Meta AI / firmware / SDK) | Esito | Note |
@@ -181,3 +196,4 @@ avviato sul Mac con un tunnel HTTPS.
 | M3-B |  |  |  |  |
 | M3-A |  |  |  |  |
 | M4 (web) |  |  |  |  |
+| M5–M6 (app) |  |  |  |  |
