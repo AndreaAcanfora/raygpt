@@ -1,0 +1,54 @@
+import SwiftUI
+
+struct SettingsView: View {
+    @Bindable var settings: AppSettings
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("https://raygpt-backend.…workers.dev", text: $settings.backendURL)
+                        .keyboardType(.URL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    SecureField("Token (APP_TOKEN)", text: $settings.token)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                } header: {
+                    Text("Backend")
+                } footer: {
+                    Text(settings.isConfigured
+                         ? "Configurazione valida. Il token è salvato nel Portachiavi."
+                         : "Serve l’indirizzo del backend (https://…) e il token di almeno 32 caratteri.")
+                }
+
+                Section("Voce") {
+                    Picker("Voce", selection: $settings.voice) {
+                        ForEach(AppSettings.voices, id: \.self) { voice in
+                            Text(voice).tag(voice)
+                        }
+                    }
+                }
+
+                Section {
+                    Stepper("Chiudi dopo \(settings.idleSeconds) s di silenzio",
+                            value: $settings.idleSeconds, in: 30...900, step: 30)
+                    Stepper("Durata massima \(settings.maxMinutes) min",
+                            value: $settings.maxMinutes, in: 5...120, step: 5)
+                } header: {
+                    Text("Limiti")
+                } footer: {
+                    Text("GPT-Live costa circa 0,05 $ al minuto e OpenAI non chiude da solo le sessioni inattive.")
+                }
+            }
+            .navigationTitle("Impostazioni")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fine") { dismiss() }
+                }
+            }
+        }
+    }
+}

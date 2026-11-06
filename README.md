@@ -19,6 +19,8 @@ mano il telefono.
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Decisioni prese e domande aperte |
 | [`docs/archive/`](docs/archive/) | Documento originale v1.0 (PDF) |
 | [`backend/`](backend/README.md) | Backend: sessioni GPT-Live, chiamate SIP, pagina web di prova |
+| [`ios/RayGPT/`](ios/RayGPT/README.md) | App iOS: GPT-Live via WebRTC, CallKit, comandi Siri (da compilare) |
+| [`spikes/AudioRouteProbe/`](spikes/AudioRouteProbe/README.md) | App di prova per l’audio degli occhiali (M3-B) |
 
 ## Il punto in breve
 

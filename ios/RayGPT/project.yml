@@ -1,0 +1,44 @@
+# XcodeGen spec: run `xcodegen generate` in this folder to create RayGPT.xcodeproj.
+name: RayGPT
+options:
+  bundleIdPrefix: com.andreaacanfora.raygpt
+  developmentLanguage: it
+  deploymentTarget:
+    iOS: "17.2"
+packages:
+  WebRTC:
+    url: https://github.com/stasel/WebRTC
+    exactVersion: 157.0.0
+settings:
+  base:
+    # Swift 5 language mode: the WebRTC Objective-C types are not Sendable.
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  RayGPT:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    dependencies:
+      - package: WebRTC
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.andreaacanfora.raygpt.app
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: RayGPT
+        UILaunchScreen: {}
+        UIBackgroundModes:
+          - audio
+          - voip
+        NSMicrophoneUsageDescription: RayGPT usa il microfono (degli occhiali, se collegati) per parlare con l’assistente.
+        NSLocalNetworkUsageDescription: Serve solo se il backend gira sul Mac nella rete locale.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
