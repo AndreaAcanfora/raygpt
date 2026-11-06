@@ -1,0 +1,10 @@
+// Meta Wearables Device Access Toolkit settings.
+// Developer Mode: META_APP_ID = 0 skips attestation, no Developer Center app needed.
+// With an app in the Wearables Developer Center, put the real values in
+// RayGPT.local.xcconfig (git-ignored), for example:
+//   META_APP_ID = 1234567890
+//   CLIENT_TOKEN = AR|...
+META_APP_ID = 0
+CLIENT_TOKEN =
+
+#include? "RayGPT.local.xcconfig"

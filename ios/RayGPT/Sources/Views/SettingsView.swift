@@ -23,6 +23,8 @@ struct SettingsView: View {
                          : "Serve l’indirizzo del backend (https://…) e il token di almeno 32 caratteri.")
                 }
 
+                MetaGlassesSection(invocations: MetaVoiceInvocations.shared)
+
                 Section("Voce") {
                     Picker("Voce", selection: $settings.voice) {
                         ForEach(AppSettings.voices, id: \.self) { voice in
@@ -50,5 +52,35 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+}
+
+/// Registration with Meta AI and status of "Hey Meta, start RayGPT".
+private struct MetaGlassesSection: View {
+    let invocations: MetaVoiceInvocations
+
+    var body: some View {
+        Section {
+            Text(invocations.status.description)
+            if invocations.status == .notRegistered || isFailure {
+                Button("Registra RayGPT in Meta AI") {
+                    Task { await invocations.register() }
+                }
+            }
+            if let last = invocations.lastInvocation {
+                Text("Ultimo “Hey Meta”: \(last.formatted(date: .omitted, time: .standard))")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Occhiali Meta")
+        } footer: {
+            Text("Serve il Developer Mode nell’app Meta AI e il nome “RayGPT” configurato nel Wearables Developer Center. Poi di’ “Hey Meta, start RayGPT”.")
+        }
+    }
+
+    private var isFailure: Bool {
+        if case .failed = invocations.status { return true }
+        return false
     }
 }
