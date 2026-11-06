@@ -143,7 +143,7 @@ Flusso documentato da OpenAI, adattato a RayGPT:
 
 1. L’app crea la `RTCPeerConnection`, aggiunge la traccia del microfono e crea il data channel
    `oai-events` **prima** di generare l’SDP offer.
-2. Invia l’offer al nostro backend (`POST /session`, JSON con il campo `sdp`), autenticandosi con il token personale.
+2. Invia l’offer al nostro backend (`POST /api/session`, JSON con il campo `sdp`), autenticandosi con il token personale.
 3. Il backend chiama `POST https://api.openai.com/v1/live/sessions` con la chiave API:
    ```json
    {
@@ -558,8 +558,11 @@ raygpt/
 | Endpoint | Scopo |
 |---|---|
 | `GET /health` | Stato del servizio |
-| `POST /session` | Riceve l’SDP offer dall’app, chiama `POST /v1/live/sessions` con istruzioni e voce decise dal backend, restituisce SDP answer e id della sessione |
+| `POST /api/session` | Riceve l’SDP offer dall’app, chiama `POST /v1/live/sessions` con istruzioni e voce decise dal backend, restituisce SDP answer e id della sessione |
 | `POST /sip/webhook` | Solo Strada C: riceve `live.transport.incoming`, verifica firma e numero chiamante, accetta o rifiuta |
+| `GET /` | Pagina web di prova: conversazione con GPT-Live da Safari, senza app iOS |
+
+Implementazione: `backend/` (Node.js, TypeScript, framework Hono), istruzioni in `backend/README.md`.
 
 Le istruzioni e la voce stanno sul backend, non nell’app: si possono cambiare senza
 reinstallare RayGPT. Il backend può anche collegarsi in sideband alla sessione per gli strumenti (§3.9).
@@ -684,7 +687,7 @@ inattive e GPT-Live si paga al minuto. Le trascrizioni (`session.input_transcrip
 | **M0** Ambiente | Xcode, iPhone in modalità sviluppatore, sample Meta compilato | Sample installato sull’iPhone |
 | **M1** Connessione Meta | Developer Mode, registrazione, sessione `started` | Sessione stabile per 10 minuti |
 | **M3** Audio | Probe HFP (B), poi audio DAT (A) | Voce comprensibile in andata e ritorno, anche a schermo bloccato |
-| **M4** OpenAI | Backend minimale + conversazione con microfono e altoparlante dell’iPhone | `t_response` mediano < 1,5 s |
+| **M4** OpenAI | Backend minimale + conversazione dall’iPhone con la pagina web di prova (Safari), poi con l’app | `t_response` mediano < 1,5 s; voce scelta per l’italiano |
 | **M5** Integrazione | Conversazione completa negli occhiali, barge-in | 10 minuti senza auto-interruzioni; `t_bargein` < 0,5 s |
 | **M6** Background | CallKit, schermo bloccato, interruzioni | 30 minuti a schermo bloccato senza cadute |
 | **M7** Attivazione | Voice Invocations (se approvate) o alternative | Avvio senza toccare il telefono |
@@ -696,6 +699,8 @@ Note:
   o se si sceglie la Strada A.
 - **M4 non dipende dagli occhiali** e può procedere in parallelo a M1–M3: i suoi risultati
   servono comunque. Resta valido il principio della v1.0: niente app completa prima di M3.
+- La pagina web di prova anticipa una parte di M5: in Safari, con gli occhiali collegati come
+  auricolare, si sentono già qualità della voce, latenza ed eco. Non copre lo schermo bloccato.
 - La Strada C è un esperimento separato, di poche ore, da fare se il test T0.3 va bene.
 
 ---

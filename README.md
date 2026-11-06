@@ -5,8 +5,9 @@ l’iPhone fa da ponte verso un modello vocale OpenAI e la risposta torna negli 
 degli occhiali. Obiettivo: un’esperienza simile a ChatGPT Advanced Voice, senza prendere in
 mano il telefono.
 
-> **Stato: progettazione e verifica hardware.** Il codice dell’app arriverà dopo il test
-> audio sugli occhiali (milestone M3). Uso personale, non destinato all’App Store.
+> **Stato: verifica hardware e backend.** Il backend con la pagina web di prova è pronto
+> ([`backend/`](backend/README.md)); il codice dell’app iOS arriverà dopo il test audio sugli
+> occhiali (milestone M3). Uso personale, non destinato all’App Store.
 
 ## Documenti
 
@@ -17,6 +18,7 @@ mano il telefono.
 | [`docs/REVIEW.md`](docs/REVIEW.md) | Analisi della v1.0: cosa era corretto, cosa era sbagliato o mancava |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Decisioni prese e domande aperte |
 | [`docs/archive/`](docs/archive/) | Documento originale v1.0 (PDF) |
+| [`backend/`](backend/README.md) | Backend: sessioni GPT-Live, chiamate SIP, pagina web di prova |
 
 ## Il punto in breve
 
@@ -36,7 +38,8 @@ Dettagli e confronto in [`docs/PROJECT.md` §5](docs/PROJECT.md#5-le-tre-strade-
 2. Account sul Meta Wearables Developer Center.
 3. M0–M1: Xcode 26.4+, sample ufficiale Meta sull’iPhone, Developer Mode sugli occhiali.
 4. M3: test audio HFP e DAT.
-5. In parallelo: progetto OpenAI con limite di spesa e backend minimale (M4).
+5. In parallelo: progetto OpenAI con limite di spesa, poi prova di GPT-Live dall’iPhone con la
+   pagina web del backend (M4, `VERIFICATION.md` Fase 5).
 
 ## Regole del repository
 

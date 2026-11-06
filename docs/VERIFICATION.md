@@ -147,6 +147,27 @@ Developer Center (da verificare se serve anche in Developer Mode) e uno stream v
 
 ---
 
+## Fase 5 — M4: GPT-Live dalla pagina web di prova
+
+Si può fare subito, anche prima di M0–M3: serve solo il backend (`backend/README.md`)
+avviato sul Mac con un tunnel HTTPS.
+
+1. Sul Mac, senza occhiali: parlare con 3–4 voci diverse e scegliere quella che pronuncia
+   meglio l’italiano. Annotarla in `OPENAI_VOICE`.
+2. Sull’iPhone con Safari, **occhiali collegati**: la voce esce dagli occhiali? Il microfono è
+   quello degli occhiali? (la pagina mostra il nome del microfono negli eventi di debug)
+3. Interrompere l’assistente mentre parla: si ferma subito?
+4. Lasciarlo parlare a volume alto: si interrompe da solo (eco)?
+5. Annotare tempo di avvio, tempo di risposta stimato e secondi fatturati.
+
+- [ ] Voce scelta per l’italiano
+- [ ] Audio negli occhiali da Safari
+- [ ] Interruzione naturale
+- [ ] Nessuna auto-interruzione da eco
+- [ ] Tempo di risposta mediano < 1,5 s
+
+---
+
 ## Registro risultati
 
 | Test | Data | Versioni (iOS / Meta AI / firmware / SDK) | Esito | Note |
@@ -159,3 +180,4 @@ Developer Center (da verificare se serve anche in Developer Mode) e uno stream v
 | M2 |  |  |  |  |
 | M3-B |  |  |  |  |
 | M3-A |  |  |  |  |
+| M4 (web) |  |  |  |  |

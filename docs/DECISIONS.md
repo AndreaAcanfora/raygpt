@@ -25,7 +25,8 @@ Registro leggero delle decisioni di progetto. Ogni decisione ha uno stato:
 
 ### D-003 — Modello e trasporto OpenAI
 
-- **Stato**: proposta, da confermare in M4 con misure di latenza, resa dell’italiano e costo.
+- **Stato**: confermata da Andrea il 6 novembre 2026 (GPT-Live). Restano da misurare in M4
+  latenza, resa dell’italiano e costo reale.
 - **Decisione**: GPT-Live (`gpt-live-1`) via WebRTC. GPT-Live non prevede token temporanei per
   il client, quindi lo scambio SDP passa obbligatoriamente dal backend.
 - **Conseguenze**: costo di 0,05 $ al minuto e nessun timeout lato OpenAI, quindi timeout di
@@ -45,6 +46,15 @@ Registro leggero delle decisioni di progetto. Ogni decisione ha uno stato:
 - **Stato**: confermata.
 - Repository privato. Documentazione in italiano; codice, commenti, commit e pull request in inglese.
 - Nessun segreto nel repository (`.env` e file di configurazione locali sono ignorati da Git).
+
+### D-006 — Backend con Hono e pagina web di prova
+
+- **Stato**: confermata.
+- **Decisione**: backend Node.js + TypeScript con il framework Hono (API standard `fetch`,
+  testabile senza server, trasferibile su altri hosting). Il backend serve anche una pagina web
+  che usa lo stesso flusso WebRTC dell’app.
+- **Motivazione**: la pagina permette di provare GPT-Live dall’iPhone, anche con gli occhiali come
+  auricolare, senza Xcode e prima di M3. L’app iOS userà lo stesso endpoint `POST /api/session`.
 
 ## Domande aperte per Andrea
 
