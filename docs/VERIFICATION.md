@@ -105,7 +105,7 @@ Primo controllo rapido: il sample **CameraAccess** registra l’audio dei video 
 degli occhiali proprio via HFP. Registrare un video con audio e riascoltarlo: se la voce c’è,
 la route HFP funziona per un’app di terze parti.
 
-Poi serve una piccola app di prova (“AudioRouteProbe”, da scrivere) che:
+Poi l’app di prova [`spikes/AudioRouteProbe`](../spikes/AudioRouteProbe/README.md), che:
 
 1. configura `AVAudioSession` con `.playAndRecord`, modalità `.voiceChat`, opzione `.allowBluetoothHFP`;
 2. elenca `availableInputs` e `currentRoute` (input e output);
