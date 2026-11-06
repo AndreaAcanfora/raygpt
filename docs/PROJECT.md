@@ -267,6 +267,9 @@ In GPT-Live gli strumenti passano dalla **delegation**:
 Il modello di backend ha un costo a parte. `gpt-live-1` non accetta immagini: anche la
 “visione” (§16) passa da un modello di backend.
 
+**Implementato nel backend**: la ricerca web via delegation si attiva con
+`OPENAI_WEB_SEARCH_MODEL` (decisione D-008, `backend/README.md`).
+
 ---
 
 ## 4. Meta Wearables Device Access Toolkit (DAT)

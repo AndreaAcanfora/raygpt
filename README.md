@@ -5,9 +5,10 @@ l’iPhone fa da ponte verso un modello vocale OpenAI e la risposta torna negli 
 degli occhiali. Obiettivo: un’esperienza simile a ChatGPT Advanced Voice, senza prendere in
 mano il telefono.
 
-> **Stato: verifica hardware e backend.** Il backend con la pagina web di prova è pronto
-> ([`backend/`](backend/README.md)); il codice dell’app iOS arriverà dopo il test audio sugli
-> occhiali (milestone M3). Uso personale, non destinato all’App Store.
+> **Stato: in attesa dei test sull’hardware.** Pronti il backend con la pagina web di prova
+> ([`backend/`](backend/README.md), anche su Cloudflare Workers), l’app iOS
+> ([`ios/RayGPT/`](ios/RayGPT/README.md), da compilare sul Mac) e l’app di prova audio.
+> Uso personale, non destinato all’App Store.
 
 ## Documenti
 

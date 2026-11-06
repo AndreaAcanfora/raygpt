@@ -184,8 +184,20 @@ function handleEvent(event) {
     case "error":
       setStatus(`Errore GPT-Live: ${event.error?.message ?? "sconosciuto"}`);
       break;
+    // Web search delegated to the backend model (OPENAI_WEB_SEARCH_MODEL).
+    case "session.delegation.created":
+      session.lastActivityAt = now;
+      setStatus("Sto cercando…");
+      break;
+    case "response.event":
+      session.lastActivityAt = now;
+      if (["response.completed", "response.failed", "response.incomplete"].includes(event.event?.type)) {
+        setStatus("In ascolto: parla pure");
+      }
+      break;
   }
-  if (!event.type.endsWith(".delta")) logEvent(JSON.stringify(event));
+  const nestedType = event.type === "response.event" ? event.event?.type ?? "" : "";
+  if (!event.type.endsWith(".delta") && !nestedType.endsWith(".delta")) logEvent(JSON.stringify(event));
   renderStats(session);
 }
 

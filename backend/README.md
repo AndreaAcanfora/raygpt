@@ -85,6 +85,18 @@ aprirlo in Safari sull’iPhone e usare la pagina di prova come sopra, senza tun
 - Prova in locale del Worker: creare `backend/.dev.vars` (ignorato da Git) con le stesse voci
   di `.env`, poi `npm run worker:dev`.
 
+## Ricerca web durante la conversazione (facoltativa)
+
+Con `OPENAI_WEB_SEARCH_MODEL` impostato (in `.env` oppure in `wrangler.toml`), quando servono
+informazioni aggiornate (orari, meteo, notizie, eventi, posti vicini) GPT-Live passa la domanda
+a un modello di backend che usa lo strumento `web_search` di OpenAI, poi risponde a voce.
+Durante la ricerca la pagina di prova e l’app mostrano “Sto cercando…”.
+
+- Valore di esempio: `gpt-5.6-terra` (il modello usato negli esempi della guida OpenAI);
+  verificare i modelli disponibili per il proprio progetto.
+- Costo a parte rispetto ai minuti vocali: token del modello di backend più le ricerche web
+  (pagina prezzi OpenAI). Vuoto = disattivata.
+
 ## Endpoint
 
 | Metodo e percorso | Autenticazione | Scopo |

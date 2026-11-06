@@ -1,4 +1,5 @@
 import type { Config } from "./config.js";
+import { WEB_SEARCH_DELEGATE_INSTRUCTIONS, WEB_SEARCH_HINT } from "./instructions.js";
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -11,11 +12,26 @@ export interface SessionOptions {
  * `audio.format` is omitted on purpose: WebRTC and SIP negotiate it on the media transport.
  */
 export function buildSessionConfig(config: Config, options: SessionOptions) {
-  return {
+  const session: Record<string, unknown> = {
     model: config.model,
     instructions: config.instructions,
     audio: { output: { voice: options.voice } },
   };
+  if (config.webSearchModel) {
+    // GPT-Live hands requests needing current facts to a backend model with web search
+    // (Responses delegation, docs/PROJECT.md §3.9). Billed separately from the voice minutes.
+    session.instructions = `${config.instructions}\n${WEB_SEARCH_HINT}`;
+    session.delegation = {
+      type: "responses",
+      responses: {
+        model: config.webSearchModel,
+        instructions: WEB_SEARCH_DELEGATE_INSTRUCTIONS,
+        tools: [{ type: "web_search" }],
+        tool_choice: "auto",
+      },
+    };
+  }
+  return session;
 }
 
 export class OpenAIError extends Error {

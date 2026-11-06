@@ -56,6 +56,24 @@ Registro leggero delle decisioni di progetto. Ogni decisione ha uno stato:
 - **Motivazione**: la pagina permette di provare GPT-Live dall’iPhone, anche con gli occhiali come
   auricolare, senza Xcode e prima di M3. L’app iOS userà lo stesso endpoint `POST /api/session`.
 
+### D-007 — Hosting del backend su Cloudflare Workers
+
+- **Stato**: proposta, da confermare al primo deploy.
+- **Decisione**: il backend gira anche su Cloudflare Workers (`backend/wrangler.toml`), gratuito
+  per un uso personale, sempre acceso e in HTTPS; resta eseguibile con Node.js.
+- **Conseguenze**: limite di sessioni e de-duplicazione dei webhook valgono per singola istanza;
+  il tetto di spesa vero è il credito del progetto OpenAI.
+
+### D-008 — Ricerca web tramite delegation, facoltativa
+
+- **Stato**: proposta, da provare in M4.
+- **Decisione**: con `OPENAI_WEB_SEARCH_MODEL` impostato, GPT-Live delega le domande che
+  richiedono informazioni aggiornate a un modello di backend con lo strumento `web_search`
+  (Responses delegation, `PROJECT.md` §3.9). Disattivata per default.
+- **Motivazione**: in viaggio molte domande riguardano orari, eventi e posti; il modello vocale
+  da solo non ha dati aggiornati.
+- **Da rivedere se**: latenza o costi della ricerca sono troppo alti per l’uso vocale.
+
 ## Domande aperte per Andrea
 
 | # | Domanda | Perché conta |

@@ -8,6 +8,10 @@ enum LiveEvent {
     case usage(seconds: Double)
     case closed(reason: String?, seconds: Double?)
     case error(String)
+    /// GPT-Live handed a request to the backend model (web search).
+    case delegationStarted
+    /// The delegated backend work finished.
+    case delegationFinished
     case other(type: String)
 
     init?(data: Data) {
@@ -32,6 +36,12 @@ enum LiveEvent {
         case "error":
             let error = object["error"] as? [String: Any]
             self = .error(error?["message"] as? String ?? "errore sconosciuto")
+        case "session.delegation.created":
+            self = .delegationStarted
+        case "response.event":
+            let nested = (object["event"] as? [String: Any])?["type"] as? String ?? ""
+            let finished = ["response.completed", "response.failed", "response.incomplete"].contains(nested)
+            self = finished ? .delegationFinished : .other(type: "response.event")
         default:
             self = .other(type: type)
         }
