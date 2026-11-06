@@ -158,6 +158,9 @@ final class ConversationController {
             startLimitsTimer()
         case .inputTranscript(let text):
             append(text, from: .user)
+            if phase == .active, let line = lines.last, line.speaker == .user, VoiceCommands.isStop(line.text) {
+                Task { await stop(reason: "voice_command") }
+            }
         case .outputTranscript(let text):
             append(text, from: .assistant)
         case .usage(let seconds):
@@ -249,6 +252,7 @@ final class ConversationController {
         switch reason {
         case "close_requested": return "chiusa da te"
         case "call_ended": return "chiamata terminata"
+        case "voice_command": return "comando vocale"
         case "idle": return "silenzio prolungato"
         case "max_duration": return "durata massima raggiunta"
         case "expired": return "sessione scaduta"
