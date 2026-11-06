@@ -11,6 +11,7 @@ const NEW_LINE_GAP_MS = 1500;
 const $ = (id) => document.getElementById(id);
 const ui = {
   token: $("token"), voice: $("voice"), idle: $("idle"), maxMinutes: $("maxMinutes"),
+  mic: $("mic"), refreshMics: $("refreshMics"),
   start: $("start"), mute: $("mute"), stop: $("stop"),
   status: $("status"), stats: $("stats"), transcript: $("transcript"), events: $("events"),
   remote: $("remote"),
@@ -44,6 +45,10 @@ fetch("/api/voices")
   .catch(() => setStatus("Backend non raggiungibile"));
 
 ui.start.addEventListener("click", () => start().catch((error) => fail(error)));
+ui.refreshMics.addEventListener("click", () => listMicrophones(ui.mic.value, true));
+ui.mic.addEventListener("change", () => localStorage.setItem("raygpt.mic", ui.mic.value));
+navigator.mediaDevices?.addEventListener?.("devicechange", () => listMicrophones(ui.mic.value));
+listMicrophones(localStorage.getItem("raygpt.mic") ?? "");
 ui.stop.addEventListener("click", () => stop("close_requested"));
 ui.mute.addEventListener("click", toggleMute);
 
@@ -64,10 +69,11 @@ async function start() {
   setButtons("connecting");
   setStatus("Accesso al microfono…");
 
-  session.mic = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-  });
+  const audio = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+  if (ui.mic.value) audio.deviceId = { exact: ui.mic.value };
+  session.mic = await navigator.mediaDevices.getUserMedia({ audio });
   const [track] = session.mic.getAudioTracks();
+  listMicrophones(track.getSettings().deviceId);
   logEvent(`microfono: ${track.label || "sconosciuto"}`);
 
   const pc = new RTCPeerConnection();
@@ -222,6 +228,28 @@ function checkLimits() {
   if (now - session.lastActivityAt > Number(ui.idle.value) * 1000) stop("idle");
   else if (now - session.startedAt > Number(ui.maxMinutes.value) * 60_000) stop("max_duration");
   else renderStats(session);
+}
+
+// --- Microphones -----------------------------------------------------------
+
+// Device names are only visible after microphone permission: "Aggiorna" asks for it once.
+async function listMicrophones(selected, askPermission = false) {
+  if (!navigator.mediaDevices?.enumerateDevices) return;
+  if (askPermission) {
+    try {
+      const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
+      probe.getTracks().forEach((track) => track.stop());
+    } catch {
+      return setStatus("Permesso microfono negato");
+    }
+  }
+  const inputs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "audioinput");
+  ui.mic.replaceChildren(new Option("Predefinito di sistema", ""));
+  inputs.forEach((device, index) => {
+    if (device.deviceId === "default" || !device.deviceId) return;
+    ui.mic.add(new Option(device.label || `Microfono ${index + 1}`, device.deviceId));
+  });
+  ui.mic.value = [...ui.mic.options].some((o) => o.value === selected) ? selected : "";
 }
 
 // --- UI helpers ------------------------------------------------------------
