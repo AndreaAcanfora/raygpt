@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+
+# Xcode / Swift
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+.swiftpm/
+.build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Local Xcode settings that may hold team IDs or app IDs
+*.local.xcconfig
+Secrets.xcconfig
+
+# Node.js / TypeScript backend
+node_modules/
+dist/
+coverage/
+*.log
+npm-debug.log*
+
+# Secrets: never commit API keys or tokens
+.env
+.env.*
+!.env.example
+
+# Editors
+.vscode/
+.idea/

@@ -1,0 +1,58 @@
+# Decisioni e domande aperte
+
+Registro leggero delle decisioni di progetto. Ogni decisione ha uno stato:
+**proposta** (in attesa di conferma o di un test), **confermata**, **superata**.
+
+## Decisioni
+
+### D-001 — Strada audio per l’MVP: Bluetooth HFP
+
+- **Stato**: proposta, da confermare dopo il test M3-B.
+- **Contesto**: l’audio del toolkit Meta arriva solo con lo stream della fotocamera, è
+  sperimentale, richiede approvazione e non gestisce l’uscita. Gli occhiali funzionano già
+  come auricolare per le chiamate.
+- **Decisione**: usare gli occhiali come auricolare HFP tramite `AVAudioSession`
+  (`.playAndRecord`, `.voiceChat`, `.allowBluetoothHFP`).
+- **Alternative**: Strada A (DAT), Strada C (telefonia). Vedi `PROJECT.md` §5.
+- **Da rivedere se**: la route HFP non è disponibile per app di terze parti o la qualità
+  della voce non basta al modello.
+
+### D-002 — Conversazione come chiamata CallKit
+
+- **Stato**: proposta, da verificare in M6.
+- **Motivazione**: iOS non permette di avviare il microfono dal background; una chiamata
+  CallKit ha audio garantito a schermo bloccato e si integra con l’auricolare.
+
+### D-003 — Modello e trasporto OpenAI
+
+- **Stato**: proposta, da confermare in M4 con misure di latenza, resa dell’italiano e costo.
+- **Decisione**: GPT-Live (`gpt-live-1`) via WebRTC. GPT-Live non prevede token temporanei per
+  il client, quindi lo scambio SDP passa obbligatoriamente dal backend.
+- **Conseguenze**: costo di 0,05 $ al minuto e nessun timeout lato OpenAI, quindi timeout di
+  inattività obbligatorio nell’app; niente logica di VAD o barge-in da scrivere (full duplex).
+- **Alternativa**: Realtime API (`gpt-realtime`, `gpt-realtime-mini`), a token, con VAD configurabile.
+- **Da rivedere se**: si sceglie la Strada A (audio PCM dal toolkit), le voci non rendono bene
+  l’italiano, o i costi misurati sono troppo alti.
+
+### D-004 — Versione del toolkit Meta fissata
+
+- **Stato**: proposta.
+- **Motivazione**: le funzioni sperimentali possono cambiare tra release minori.
+  Aggiornare solo di proposito, leggendo il changelog.
+
+### D-005 — Repository e lingua
+
+- **Stato**: confermata.
+- Repository privato. Documentazione in italiano; codice, commenti, commit e pull request in inglese.
+- Nessun segreto nel repository (`.env` e file di configurazione locali sono ignorati da Git).
+
+## Domande aperte per Andrea
+
+| # | Domanda | Perché conta |
+|---|---|---|
+| Q1 | C’è una scadenza, per esempio un viaggio (gli esempi parlano di Pechino)? | Cambia priorità e richiede di verificare l’accesso a OpenAI e Meta dal Paese di destinazione |
+| Q2 | Qual è il budget mensile per l’API OpenAI? | Limite di spesa del progetto, scelta del modello, timeout |
+| Q3 | Iscrizione al programma Apple Developer (a pagamento)? | Con l’account gratuito l’app va reinstallata ogni 7 giorni |
+| Q4 | La qualità audio “da telefonata” (HFP) è accettabile? | Determina se la Strada B basta |
+| Q5 | Va bene comprare un numero telefonico per la Strada C? | Costo mensile del numero e dei minuti |
+| Q6 | Lingue principali: italiano e inglese? | Istruzioni del modello, test, comando “Hey Meta” |
