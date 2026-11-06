@@ -1,0 +1,33 @@
+# XcodeGen spec: run `xcodegen generate` in this folder to create AudioRouteProbe.xcodeproj.
+name: AudioRouteProbe
+options:
+  bundleIdPrefix: com.andreaacanfora.raygpt
+  deploymentTarget:
+    iOS: "17.2"
+settings:
+  base:
+    # Swift 5 language mode keeps this throwaway probe free of strict-concurrency friction.
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  AudioRouteProbe:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.andreaacanfora.raygpt.audiorouteprobe
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: AudioProbe
+        UILaunchScreen: {}
+        UIBackgroundModes:
+          - audio
+        NSMicrophoneUsageDescription: Serve per registrare dal microfono degli occhiali e verificare la qualità audio.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
