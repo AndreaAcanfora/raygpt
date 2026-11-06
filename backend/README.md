@@ -58,6 +58,33 @@ Attenzione: finché il tunnel è attivo l’indirizzo è pubblico. È protetto d
 chiudere il tunnel (Ctrl+C) quando si finisce. Con lo schermo bloccato Safari sospende la pagina:
 per l’uso in tasca serve l’app iOS (milestone M6).
 
+## Pubblicazione su Cloudflare Workers (consigliata)
+
+Per non dipendere dal Mac acceso e dal tunnel, il backend può girare su Cloudflare Workers:
+gratuito per un uso personale, sempre acceso, in HTTPS. Serve un account Cloudflare (gratuito).
+
+```bash
+cd backend
+npm install
+npx wrangler login                        # apre il browser per autorizzare
+npx wrangler secret put OPENAI_API_KEY    # incolla la chiave quando richiesto
+npx wrangler secret put APP_TOKEN         # incolla il token (openssl rand -hex 32)
+npm run deploy
+```
+
+Il comando stampa l’indirizzo, per esempio `https://raygpt-backend.<tuo-account>.workers.dev`:
+aprirlo in Safari sull’iPhone e usare la pagina di prova come sopra, senza tunnel.
+
+- Voce, modello e limite di sessioni sono in `wrangler.toml` (`[vars]`); dopo una modifica
+  ripetere `npm run deploy`.
+- Per la Strada C aggiungere `npx wrangler secret put OPENAI_WEBHOOK_SECRET` e il proprio
+  numero in `SIP_CALLER_ALLOWLIST`.
+- Log in tempo reale: `npx wrangler tail`.
+- Su Workers il limite di sessioni giornaliere vale per singola istanza: il tetto di spesa vero
+  resta il credito del progetto OpenAI.
+- Prova in locale del Worker: creare `backend/.dev.vars` (ignorato da Git) con le stesse voci
+  di `.env`, poi `npm run worker:dev`.
+
 ## Endpoint
 
 | Metodo e percorso | Autenticazione | Scopo |
@@ -81,7 +108,8 @@ si possono cambiare senza toccare l’app.
 3. Presso un provider VoIP, puntare il trunk SIP del numero a
    `sip:<id progetto>@sip-eu.api.openai.com;transport=tls`.
 
-Il backend deve essere raggiungibile da OpenAI in HTTPS in modo stabile (non con un tunnel temporaneo).
+Il backend deve essere raggiungibile da OpenAI in HTTPS in modo stabile (non con un tunnel
+temporaneo): per esempio su Cloudflare Workers, con webhook `https://raygpt-backend.<tuo-account>.workers.dev/sip/webhook`.
 
 ## Limiti e sicurezza
 

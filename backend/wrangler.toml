@@ -1,0 +1,20 @@
+# Cloudflare Workers deployment (alternative to running src/server.ts with Node).
+# Secrets are not stored here: set them with `npx wrangler secret put <NAME>`.
+name = "raygpt-backend"
+main = "src/worker.ts"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# The web test client (public/) is served as static assets; other paths reach the Worker.
+[assets]
+directory = "./public"
+
+[vars]
+OPENAI_MODEL = "gpt-live-1"
+OPENAI_VOICE = "marin"
+MAX_SESSIONS_PER_DAY = "50"
+# Strada C only: comma-separated E.164 numbers allowed to call.
+SIP_CALLER_ALLOWLIST = ""
+
+[observability]
+enabled = true

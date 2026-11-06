@@ -27,3 +27,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Check the Cloudflare Workers bundle
+        run: npm run worker:check
+        env:
+          WRANGLER_SEND_METRICS: "false"

@@ -570,7 +570,8 @@ reinstallare RayGPT. Il backend può anche collegarsi in sideband alla sessione 
 - Autenticazione: un token lungo e casuale, salvato nel Portachiavi dell’iPhone e confrontato
   dal backend (sufficiente per un solo utente). Mai la chiave OpenAI nell’app.
 - Limiti: durata massima per sessione, sessioni al giorno, limite di spesa sul progetto OpenAI.
-- Hosting: qualunque servizio con HTTPS (per esempio Cloudflare Workers, Fly.io, Render).
+- Hosting: il backend gira con Node.js (Mac, qualunque server) oppure su **Cloudflare Workers**,
+  gratuito e sempre acceso, già configurato (`backend/wrangler.toml`).
   Non serve un database nell’MVP.
 
 ---

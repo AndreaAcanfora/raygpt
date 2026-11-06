@@ -33,3 +33,7 @@ npm-debug.log*
 # Editors
 .vscode/
 .idea/
+
+# Cloudflare Workers local files
+.dev.vars
+.wrangler/
