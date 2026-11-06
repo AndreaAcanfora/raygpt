@@ -75,8 +75,11 @@ npm run deploy
 Il comando stampa l’indirizzo, per esempio `https://raygpt-backend.<tuo-account>.workers.dev`:
 aprirlo in Safari sull’iPhone e usare la pagina di prova come sopra, senza tunnel.
 
-- Voce, modello e limite di sessioni sono in `wrangler.toml` (`[vars]`); dopo una modifica
-  ripetere `npm run deploy`.
+- **Pubblicazione automatica:** ogni modifica a `backend/` unita su `main` viene pubblicata da
+  GitHub Actions (job `deploy` di `.github/workflows/backend.yml`, secret `CLOUDFLARE_API_TOKEN`).
+  Si può anche avviare a mano da GitHub → Actions → backend → Run workflow.
+- Voce, modello e limite di sessioni sono in `wrangler.toml` (`[vars]`): basta modificarli e
+  unire la modifica su `main`.
 - Per la Strada C aggiungere `npx wrangler secret put OPENAI_WEBHOOK_SECRET` e il proprio
   numero in `SIP_CALLER_ALLOWLIST`.
 - Log in tempo reale: `npx wrangler tail`.

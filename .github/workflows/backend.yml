@@ -6,6 +6,7 @@ on:
     paths: ["backend/**", ".github/workflows/backend.yml"]
   pull_request:
     paths: ["backend/**", ".github/workflows/backend.yml"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -31,3 +32,35 @@ jobs:
         run: npm run worker:check
         env:
           WRANGLER_SEND_METRICS: "false"
+
+  # Publishes https://raygpt-backend.andreaacanfora.workers.dev after the checks pass on main.
+  # Secrets set with `wrangler secret put` (OPENAI_API_KEY, APP_TOKEN) are kept between deploys.
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    concurrency: deploy-workers
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Deploy to Cloudflare Workers
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 4399bf3a9828006e40f2764f1cbb3613
+          WRANGLER_SEND_METRICS: "false"
+      - name: Check the deployed backend
+        run: |
+          for i in 1 2 3 4 5 6; do
+            curl -fsS https://raygpt-backend.andreaacanfora.workers.dev/health && exit 0
+            sleep 10
+          done
+          exit 1
