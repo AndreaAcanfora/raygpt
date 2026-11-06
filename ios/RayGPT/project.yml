@@ -9,6 +9,9 @@ packages:
   WebRTC:
     url: https://github.com/stasel/WebRTC
     exactVersion: 157.0.0
+  MWDAT:
+    url: https://github.com/facebook/meta-wearables-dat-ios
+    exactVersion: 1.0.1
 settings:
   base:
     # Swift 5 language mode: the WebRTC Objective-C types are not Sendable.
@@ -21,8 +24,13 @@ targets:
     platform: iOS
     sources:
       - Sources
+    configFiles:
+      Debug: Config/RayGPT.xcconfig
+      Release: Config/RayGPT.xcconfig
     dependencies:
       - package: WebRTC
+      - package: MWDAT
+        product: MWDATCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.andreaacanfora.raygpt.app
@@ -36,8 +44,33 @@ targets:
         UIBackgroundModes:
           - audio
           - voip
+          # Meta Device Access Toolkit links (Bluetooth LE, Bluetooth Classic, Wi-Fi).
+          - processing
+          - bluetooth-central
+          - bluetooth-peripheral
+          - external-accessory
+        UISupportedExternalAccessoryProtocols:
+          - com.meta.ar.wearable
+        NSBluetoothAlwaysUsageDescription: Serve per collegarsi agli occhiali Meta e ricevere “Hey Meta, start RayGPT”.
+        NSBonjourServices:
+          - _bonjour._tcp
+        # Meta AI calls RayGPT back through this scheme after registration.
+        CFBundleURLTypes:
+          - CFBundleTypeRole: Editor
+            CFBundleURLName: com.andreaacanfora.raygpt.app
+            CFBundleURLSchemes:
+              - raygpt
+        MWDAT:
+          AppLinkURLScheme: raygpt://
+          MetaAppID: $(META_APP_ID)
+          ClientToken: $(CLIENT_TOKEN)
+          TeamID: $(DEVELOPMENT_TEAM)
+          Analytics:
+            OptOut: true
+          CrashReporting:
+            OptOut: true
         NSMicrophoneUsageDescription: RayGPT usa il microfono (degli occhiali, se collegati) per parlare con l’assistente.
-        NSLocalNetworkUsageDescription: Serve solo se il backend gira sul Mac nella rete locale.
+        NSLocalNetworkUsageDescription: Serve per il collegamento Wi-Fi con gli occhiali Meta e per un backend nella rete locale.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         UISupportedInterfaceOrientations:

@@ -74,6 +74,15 @@ Registro leggero delle decisioni di progetto. Ogni decisione ha uno stato:
   da solo non ha dati aggiornati.
 - **Da rivedere se**: latenza o costi della ricerca sono troppo alti per l’uso vocale.
 
+### D-009 — Attivazione e chiusura a voce
+
+- **Stato**: confermata da Andrea il 6 novembre 2026; da verificare sull’hardware.
+- **Attivazione**: “Hey Meta, start RayGPT” con le Voice Invocations del toolkit Meta nell’app
+  iOS. Piano B: “Hey Meta, chiama RayGPT” verso un numero collegato via SIP (Strada C).
+- **Chiusura**: “stop RayGPT” o “chiudi RayGPT” riconosciuti nella trascrizione, senza il modello.
+- **Esclusi**: modificare firmware o SDK degli occhiali (chiusi, contro i termini Meta) e, per ora,
+  una parola di attivazione propria (microfono sempre aperto, batteria).
+
 ## Domande aperte per Andrea
 
 | # | Domanda | Perché conta |

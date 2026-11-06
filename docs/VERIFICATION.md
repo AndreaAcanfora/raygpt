@@ -180,6 +180,10 @@ Con l’app di [`ios/RayGPT`](../ios/RayGPT/README.md) e il backend pubblicato i
 - [ ] Chiusura dalla schermata di blocco e con il tocco sugli occhiali (fine chiamata)
 - [ ] “Ehi Siri, avvia RayGPT” e tasto Azione funzionano a schermo bloccato
 - [ ] Chiamata telefonica in arrivo durante la conversazione: comportamento annotato
+- [ ] “stop RayGPT” chiude la conversazione (anche nella pagina web)
+- [ ] App registrata in Meta AI, stato “In ascolto di “Hey Meta, start RayGPT””
+- [ ] “Hey Meta, start RayGPT” avvia la conversazione con app chiusa, in background e a iPhone bloccato
+- [ ] Il comando funziona anche in italiano (“Hey Meta, avvia RayGPT”)?
 
 ---
 

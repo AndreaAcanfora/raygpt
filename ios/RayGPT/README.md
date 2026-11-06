@@ -13,8 +13,8 @@ Prima versione dell’app (milestone M4–M6, `docs/PROJECT.md` §7–8):
 - Trascrizione, silenzia microfono, chiusura dopo il silenzio e durata massima, costo stimato.
 - Token del backend salvato nel Portachiavi.
 
-Non ancora presente: “Hey Meta, start RayGPT” (Voice Invocations del toolkit Meta, M7) e gli
-strumenti (meteo, ricerca, promemoria).
+- **“Hey Meta, start RayGPT”** con le Voice Invocations del toolkit Meta (1.0.1, sperimentali):
+  avvia la conversazione; “stop RayGPT” o “chiudi RayGPT” la chiude.
 
 > Il codice è stato scritto senza poterlo compilare (non c’era Xcode a disposizione), dopo aver
 > verificato le interfacce sugli header della libreria WebRTC 157. Se Xcode segnala errori,
@@ -58,3 +58,27 @@ Nell’app, icona ingranaggio:
    Comando rapido → Avvia RayGPT.
 
 Annotare i risultati in `docs/VERIFICATION.md` (Fase 6).
+
+## Attivare “Hey Meta, start RayGPT”
+
+1. **Developer Mode** nell’app Meta AI: Impostazioni → Info app → 5 tocchi sul numero di
+   versione → Developer Mode → Abilita. Firmware occhiali V128 e app Meta AI V292 o successive.
+2. **Wearables Developer Center** (https://wearables.developer.meta.com): creare l’account e
+   un’app con bundle identifier `com.andreaacanfora.raygpt.app`, nome dell’app **RayGPT**
+   (è la parola chiave del comando vocale), e una versione che includa il permesso
+   Voice Invocation.
+3. Se il Developer Center fornisce `MetaAppID` e `ClientToken`, metterli in
+   `Config/RayGPT.local.xcconfig` (ignorato da Git):
+   ```
+   META_APP_ID = 1234567890
+   CLIENT_TOKEN = AR|...
+   ```
+   e rigenerare il progetto (`xcodegen generate`). Senza, l’app usa il Developer Mode (`META_APP_ID = 0`).
+4. Nell’app: ingranaggio → **Occhiali Meta** → **Registra RayGPT in Meta AI**, approvare in Meta AI.
+   Lo stato deve diventare “In ascolto di “Hey Meta, start RayGPT””.
+5. Dire **“Hey Meta, start RayGPT”**: Meta AI avvia l’app e parte la conversazione.
+   Per chiuderla: **“stop RayGPT”**.
+
+In Developer Mode resta registrata una sola app di terze parti: registrare RayGPT cancella
+la registrazione dei sample Meta, e viceversa. Da verificare: funzionamento a iPhone bloccato
+e comando in italiano (“Hey Meta, avvia RayGPT”).
