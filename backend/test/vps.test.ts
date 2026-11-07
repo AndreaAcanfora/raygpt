@@ -65,5 +65,6 @@ describe("VPS routing hints", () => {
     expect(VPS_HINT).toMatch(/never needs to say so/);
     expect(VPS_HINT).toMatch(/WhatsApp/);
     expect(VPS_HINT).toMatch(/emails/);
+    expect(VPS_HINT).toMatch(/merge pull requests/);
   });
 });
