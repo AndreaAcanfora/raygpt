@@ -40,10 +40,21 @@ describe("VPS tool (MCP via delegation)", () => {
     expect(session.delegation.responses.tools).toEqual([{ type: "web_search" }]);
   });
 
+  it("WEB_SEARCH_VIA=vps drops OpenAI's web_search and sends searches to the VPS", () => {
+    const session = buildSessionConfig(testConfig({ ...VPS, WEB_SEARCH_VIA: "vps" }), { voice: "marin" }) as {
+      delegation: { responses: { tools: Array<{ type: string }>; instructions: string } };
+    };
+    expect(session.delegation.responses.tools.map((t) => t.type)).toEqual(["mcp"]);
+    expect(session.delegation.responses.instructions).toContain("search the web");
+    expect(session.delegation.responses.instructions).toContain("vps_task");
+  });
+
   it("rejects half or unsafe configurations", () => {
     expect(() => testConfig({ ...VPS, VPS_MCP_TOKEN: "" })).toThrow(ConfigError);
     expect(() => testConfig({ ...VPS, VPS_MCP_URL: "http://plain.example/mcp" })).toThrow(/https/);
     expect(() => testConfig({ ...VPS, VPS_MCP_TOKEN: "short" })).toThrow(/32/);
     expect(() => testConfig({ ...VPS, OPENAI_WEB_SEARCH_MODEL: "" })).toThrow(/OPENAI_WEB_SEARCH_MODEL/);
+    expect(() => testConfig({ WEB_SEARCH_VIA: "vps" })).toThrow(/VPS_MCP_URL/);
+    expect(() => testConfig({ WEB_SEARCH_VIA: "google" })).toThrow(/openai/);
   });
 });

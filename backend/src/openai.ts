@@ -1,5 +1,11 @@
 import type { Config } from "./config.js";
-import { VPS_DELEGATE_INSTRUCTIONS, VPS_HINT, WEB_SEARCH_DELEGATE_INSTRUCTIONS, WEB_SEARCH_HINT } from "./instructions.js";
+import {
+  VPS_DELEGATE_INSTRUCTIONS,
+  VPS_HINT,
+  VPS_SEARCH_DELEGATE_INSTRUCTIONS,
+  WEB_SEARCH_DELEGATE_INSTRUCTIONS,
+  WEB_SEARCH_HINT,
+} from "./instructions.js";
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -20,9 +26,10 @@ export function buildSessionConfig(config: Config, options: SessionOptions) {
   if (config.webSearchModel) {
     // GPT-Live hands requests needing current facts to a backend model with web search
     // (Responses delegation, docs/PROJECT.md §3.9). Billed separately from the voice minutes.
-    const tools: Array<Record<string, unknown>> = [{ type: "web_search" }];
+    const searchOnVps = config.webSearchVia === "vps" && config.vps !== undefined;
+    const tools: Array<Record<string, unknown>> = searchOnVps ? [] : [{ type: "web_search" }];
     let instructions = `${config.instructions}\n${WEB_SEARCH_HINT}`;
-    let delegateInstructions = WEB_SEARCH_DELEGATE_INSTRUCTIONS;
+    let delegateInstructions = searchOnVps ? VPS_SEARCH_DELEGATE_INSTRUCTIONS : WEB_SEARCH_DELEGATE_INSTRUCTIONS;
     if (config.vps) {
       // OpenAI calls the VPS MCP server directly; Live passes the headers through and never
       // returns them in the session config.

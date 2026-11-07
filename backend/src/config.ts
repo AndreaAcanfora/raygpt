@@ -25,6 +25,11 @@ export interface Config {
    * (WhatsApp Web, websites, GitHub) run by Claude Code there. Needs `webSearchModel`.
    */
   vps?: { url: string; token: string };
+  /**
+   * Who runs web searches: OpenAI's web_search tool (billed per search plus result tokens), or
+   * the VPS agent (no OpenAI search cost, slower). "vps" needs `vps`.
+   */
+  webSearchVia: "openai" | "vps";
   /** Apple Team ID for the universal link file (apple-app-site-association). */
   appleTeamId?: string;
   /** Bundle identifier of the iOS app. */
@@ -61,6 +66,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     sipCallerAllowlist: parseAllowlist(env.SIP_CALLER_ALLOWLIST),
     webSearchModel: env.OPENAI_WEB_SEARCH_MODEL?.trim() || undefined,
     vps: parseVps(env),
+    webSearchVia: parseWebSearchVia(env),
     appleTeamId: parseTeamId(env.APPLE_TEAM_ID),
     iosBundleId: env.IOS_BUNDLE_ID?.trim() || "com.andreaacanfora.raygpt.app",
     maxSessionsPerDay: positiveInt(env, "MAX_SESSIONS_PER_DAY", 50),
@@ -95,6 +101,13 @@ function parseVps(env: Record<string, string | undefined>): Config["vps"] {
     throw new ConfigError("The VPS tool runs through the backend model: set OPENAI_WEB_SEARCH_MODEL too");
   }
   return { url, token };
+}
+
+function parseWebSearchVia(env: Record<string, string | undefined>): Config["webSearchVia"] {
+  const value = env.WEB_SEARCH_VIA?.trim() || "openai";
+  if (value !== "openai" && value !== "vps") throw new ConfigError('WEB_SEARCH_VIA must be "openai" or "vps"');
+  if (value === "vps" && !env.VPS_MCP_URL?.trim()) throw new ConfigError('WEB_SEARCH_VIA="vps" needs VPS_MCP_URL');
+  return value;
 }
 
 function parseTeamId(raw: string | undefined): string | undefined {

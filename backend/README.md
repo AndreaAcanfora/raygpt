@@ -110,6 +110,8 @@ diventa un compito per il Claude che gira sul VPS, con il suo browser già logga
 - È OpenAI a chiamare il VPS, con il token come `Authorization: Bearer`; l’app non cambia.
 - Un compito può durare un paio di minuti: se non è finito, RayGPT lo dice e controlla quando
   gli si chiede “com’è andata?” (`vps_task_status`).
+- Con `WEB_SEARCH_VIA=vps` anche le ricerche web le fa il Claude del VPS al posto dello strumento
+  `web_search` di OpenAI: niente costo di ricerca OpenAI, ma risposte in 20-60 secondi invece di 5-10.
 - Su Workers l’URL sta in `wrangler.toml`; il token è il secret GitHub `VPS_MCP_TOKEN`, caricato
   dal workflow di deploy con `wrangler secret put` prima di pubblicare.
 

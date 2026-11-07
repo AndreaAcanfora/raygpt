@@ -23,6 +23,9 @@ OPENAI_WEB_SEARCH_MODEL = "gpt-5.6-terra"
 # The user's VPS as an MCP tool (cb-gateway), run by the same backend model.
 # Its token is the VPS_MCP_TOKEN secret, uploaded by the deploy workflow.
 VPS_MCP_URL = "https://claude-vps.tail495c87.ts.net:10000/mcp"
+# Web searches: "openai" (web_search tool, billed per search) or "vps" (the VPS agent searches:
+# no OpenAI search cost, about 20-60 s instead of 5-10 s).
+WEB_SEARCH_VIA = "vps"
 # Apple Team ID (10 characters) for the universal link https://<backend>/meta/callback.
 APPLE_TEAM_ID = "PVX9XK893V"
 # Strada C only: comma-separated E.164 numbers allowed to call.

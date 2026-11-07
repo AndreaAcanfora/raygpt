@@ -36,6 +36,11 @@ request, complete and in their words. If it returns a task_id because it is stil
 the user asks how it went, call vps_task_status. Report only what the tool returned, briefly, for a
 spoken conversation. If the tool asks a question, pass it to the user; continue with session_id.`;
 
+/** Backend model instructions when web searches go to the VPS agent instead of web_search. */
+export const VPS_SEARCH_DELEGATE_INSTRUCTIONS = `When the user needs current facts (opening hours, weather, news, timetables, prices,
+places), call vps_task asking it to search the web and answer in two or three sentences, with the times,
+dates and numbers the user asked for. Then answer from its result, concisely, for a spoken conversation.`;
+
 /** Instructions for the backend model that runs web searches for GPT-Live. */
 export const WEB_SEARCH_DELEGATE_INSTRUCTIONS = `Use web search when current facts are needed.
 Return concise, grounded results for a spoken conversation, in the user's language.
