@@ -14,6 +14,7 @@ const ui = {
   mic: $("mic"), refreshMics: $("refreshMics"),
   start: $("start"), mute: $("mute"), stop: $("stop"),
   status: $("status"), stats: $("stats"), transcript: $("transcript"), events: $("events"),
+  copyEvents: $("copyEvents"), copyStatus: $("copyStatus"),
   remote: $("remote"),
 };
 
@@ -51,6 +52,7 @@ navigator.mediaDevices?.addEventListener?.("devicechange", () => listMicrophones
 listMicrophones(localStorage.getItem("raygpt.mic") ?? "");
 ui.stop.addEventListener("click", () => stop("close_requested"));
 ui.mute.addEventListener("click", toggleMute);
+ui.copyEvents.addEventListener("click", copyEvents);
 
 // --- Session lifecycle -----------------------------------------------------
 
@@ -302,7 +304,29 @@ function setStatus(text) {
 }
 
 function logEvent(text) {
-  ui.events.textContent = `${new Date().toLocaleTimeString()} ${text}\n${ui.events.textContent}`.slice(0, 20_000);
+  ui.events.textContent = `${new Date().toLocaleTimeString()} ${text}\n${ui.events.textContent}`.slice(0, 200_000);
+}
+
+/** Copies the event log, oldest first, to paste it into a bug report. */
+async function copyEvents() {
+  const text = ui.events.textContent.trim().split("\n").reverse().join("\n");
+  if (!text) {
+    ui.copyStatus.textContent = "Nessun evento da copiare";
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // Fallback for browsers without the async clipboard API.
+    const area = document.createElement("textarea");
+    area.value = text;
+    document.body.append(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+  }
+  ui.copyStatus.textContent = `Copiati ${text.split("\n").length} eventi`;
+  setTimeout(() => { ui.copyStatus.textContent = ""; }, 3000);
 }
 
 function describeError(status, body) {

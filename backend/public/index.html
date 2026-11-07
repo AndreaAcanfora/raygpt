@@ -29,6 +29,8 @@
     #transcript .user::before { content: "Tu: "; font-weight: 600; }
     #transcript .assistant::before { content: "RayGPT: "; font-weight: 600; color: var(--accent); }
     details { margin-top: 12px; color: var(--muted); font-size: 0.8rem; }
+    .events-bar { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+    .events-bar button { width: auto; font-size: 0.9rem; padding: 8px 14px; }
     #events { white-space: pre-wrap; font-family: ui-monospace, monospace; max-height: 240px; overflow: auto; }
   </style>
 </head>
@@ -74,6 +76,10 @@
 
   <details>
     <summary>Eventi (debug)</summary>
+    <div class="events-bar">
+      <button id="copyEvents" class="secondary" type="button">Copia eventi</button>
+      <span id="copyStatus" role="status"></span>
+    </div>
     <div id="events"></div>
   </details>
 
