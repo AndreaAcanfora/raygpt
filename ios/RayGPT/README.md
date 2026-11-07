@@ -76,6 +76,8 @@ Annotare i risultati in `docs/VERIFICATION.md` (Fase 6).
    e rigenerare il progetto (`xcodegen generate`). Senza, l’app usa il Developer Mode (`META_APP_ID = 0`).
 4. Nell’app: ingranaggio → **Occhiali Meta** → **Registra RayGPT in Meta AI**, approvare in Meta AI.
    Lo stato deve diventare “In ascolto di “Ehi Meta, avvia Raggio””.
+   Dopo una nuova versione nel Developer Center (per esempio un cambio di nome): **Annulla
+   registrazione**, poi registrare di nuovo.
 5. Dire **“Ehi Meta, avvia Raggio”**: Meta AI avvia l’app e parte la conversazione.
    Per chiuderla: **“stop Raggio”**.
 

@@ -81,6 +81,16 @@ final class MetaVoiceInvocations {
         }
     }
 
+    /// Opens Meta AI to remove RayGPT's registration, e.g. after a new Developer Center version.
+    func unregister() async {
+        guard configured else { return }
+        do {
+            try await Wearables.shared.startUnregistration()
+        } catch {
+            status = .failed(error.localizedDescription)
+        }
+    }
+
     /// Forwards Meta AI callbacks (registration) to the SDK.
     func handle(url: URL) {
         guard configured,

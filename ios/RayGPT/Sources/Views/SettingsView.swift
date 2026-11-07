@@ -67,6 +67,11 @@ private struct MetaGlassesSection: View {
                     Task { await invocations.register() }
                 }
             }
+            if invocations.status == .listening || invocations.status == .waitingForGlasses {
+                Button("Annulla registrazione", role: .destructive) {
+                    Task { await invocations.unregister() }
+                }
+            }
             if let last = invocations.lastInvocation {
                 Text("Ultimo “Ehi Meta”: \(last.formatted(date: .omitted, time: .standard))")
                     .font(.footnote)
