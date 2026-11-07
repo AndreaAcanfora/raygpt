@@ -59,32 +59,38 @@ Nell’app, icona ingranaggio:
 
 Annotare i risultati in `docs/VERIFICATION.md` (Fase 6).
 
-## Attivare “Ehi Meta, avvia Raggio”
+## Attivare “Ehi Meta, apri l’app Raggio”
 
-1. **Developer Mode** nell’app Meta AI: Impostazioni → Info app → 5 tocchi sul numero di
-   versione → Developer Mode → Abilita. Firmware occhiali V128 e app Meta AI V292 o successive.
-2. **Wearables Developer Center** (https://wearables.developer.meta.com): creare l’account e
-   un’app con bundle identifier `com.andreaacanfora.raygpt.app`, nome dell’app **Raggio**
-   (è la parola chiave del comando vocale), e una versione che includa il permesso
-   Voice Invocation.
-3. Se il Developer Center fornisce `MetaAppID` e `ClientToken`, metterli in
-   `Config/RayGPT.local.xcconfig` (ignorato da Git):
+Procedura verificata il 7 novembre 2026 (occhiali in italiano), seguendo la risposta di Meta in
+https://github.com/meta/meta-wearables-dat-ios/discussions/326.
+
+1. Firmware occhiali V128 e app Meta AI V292 o successive.
+2. **Wearables Developer Center** (https://wearables.developer.meta.com): un’app con Team ID
+   `PVX9XK893V`, bundle identifier `com.andreaacanfora.raygpt.app` e nome dell’app **Raggio**
+   (Product listing: è la parola chiave del comando vocale). Ogni modifica richiede una nuova
+   versione, da assegnare al canale **Beta** (Distribute), con il proprio account Meta AI
+   invitato. Non esiste un permesso “Voice Invocation” da attivare: è incluso in ogni versione.
+3. `MetaAppID` e `ClientToken` del Developer Center in `Config/RayGPT.local.xcconfig`
+   (ignorato da Git), poi `xcodegen generate`:
    ```
    META_APP_ID = 1234567890
    CLIENT_TOKEN = AR|...
    ```
-   e rigenerare il progetto (`xcodegen generate`). Senza, l’app usa il Developer Mode (`META_APP_ID = 0`).
-4. Nell’app: ingranaggio → **Occhiali Meta** → **Registra RayGPT in Meta AI**, approvare in Meta AI.
-   Lo stato deve diventare “In ascolto di “Ehi Meta, avvia Raggio””.
-   Dopo una nuova versione nel Developer Center (per esempio un cambio di nome): **Annulla
-   registrazione**, poi registrare di nuovo.
-5. Dire **“Ehi Meta, avvia Raggio”**: Meta AI avvia l’app e parte la conversazione.
-   Per chiuderla: **“stop Raggio”**.
+4. Nell’app Meta AI il **Developer Mode deve essere spento**: le app registrate in Developer
+   Mode (`META_APP_ID = 0`) non si avviano a voce.
+5. Nell’app: ingranaggio → **Occhiali Meta** → **Registra Raggio in Meta AI**, approvare in
+   Meta AI. Con il Personal Team l’app non può usare l’universal link https del Developer
+   Center (serve l’entitlement Associated Domains, solo a pagamento): Meta AI apre la pagina
+   `/meta/callback` del backend in Safari. Consegnare la stessa richiesta all’app con
+   `xcrun devicectl device process launch --device <UDID> --payload-url
+   "raygpt://meta/callback?<parametri della pagina, con + scritto %2B>" com.andreaacanfora.raygpt.app`.
+   Dopo una nuova versione nel Developer Center: **Annulla registrazione**, poi registrare di nuovo.
+6. App Meta AI → **App connections** → **Raggio** → attivare **Launch with “Hey Meta”**.
+   Tenere gli occhiali collegati circa 15 minuti, perché si aggiorni l’elenco delle app.
+7. Dire **“Ehi Meta, apri l’app Raggio”**: Meta AI avvia l’app e parte la conversazione.
+   Per chiuderla: **“termina Raggio”** (o “chiudi”, “ferma”, “stop”).
 
-In Developer Mode resta registrata una sola app di terze parti: registrare RayGPT cancella
-la registrazione dei sample Meta, e viceversa. Da verificare: funzionamento a iPhone bloccato
-e il comando “chiudi” in italiano.
-
-Il nome nel Developer Center è **Raggio** e non RayGPT: con gli occhiali in italiano
-Meta AI trascriveva “RayGPT” come “regbet” e non trovava l’app. Serve una parola che il
+Lingua: Meta ha verificato solo l’inglese (US). In italiano funziona “apri l’app Raggio”;
+“avvia Raggio” viene preso come richiesta generica o fa partire Spotify. Il nome è **Raggio** e
+non RayGPT perché Meta AI trascriveva “RayGPT” come “regbet”: serve una parola sola che il
 riconoscimento vocale nella lingua degli occhiali scriva sempre allo stesso modo.

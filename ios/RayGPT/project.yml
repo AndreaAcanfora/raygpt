@@ -53,7 +53,7 @@ targets:
           - external-accessory
         UISupportedExternalAccessoryProtocols:
           - com.meta.ar.wearable
-        NSBluetoothAlwaysUsageDescription: Serve per collegarsi agli occhiali Meta e ricevere “Ehi Meta, avvia Raggio”.
+        NSBluetoothAlwaysUsageDescription: Serve per collegarsi agli occhiali Meta e ricevere “Ehi Meta, apri l’app Raggio”.
         NSBonjourServices:
           - _bonjour._tcp
         # Meta AI calls RayGPT back through this scheme after registration.
