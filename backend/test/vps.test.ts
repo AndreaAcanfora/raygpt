@@ -59,3 +59,11 @@ describe("VPS tool (MCP via delegation)", () => {
     expect(() => testConfig({ WEB_SEARCH_VIA: "google" })).toThrow(/openai/);
   });
 });
+
+describe("VPS routing hints", () => {
+  it("routes WhatsApp and email to the VPS without the user naming it", () => {
+    expect(VPS_HINT).toMatch(/never needs to say so/);
+    expect(VPS_HINT).toMatch(/WhatsApp/);
+    expect(VPS_HINT).toMatch(/emails/);
+  });
+});
