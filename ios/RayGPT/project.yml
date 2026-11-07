@@ -72,6 +72,7 @@ targets:
           CrashReporting:
             OptOut: true
         NSMicrophoneUsageDescription: RayGPT usa il microfono (degli occhiali, se collegati) per parlare con l’assistente.
+        NSLocationWhenInUseUsageDescription: RayGPT usa la tua posizione durante la conversazione per rispondere a domande come “una pizzeria qui vicino”.
         NSLocalNetworkUsageDescription: Serve per il collegamento Wi-Fi con gli occhiali Meta e per un backend nella rete locale.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true

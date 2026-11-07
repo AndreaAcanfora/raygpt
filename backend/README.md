@@ -115,6 +115,19 @@ diventa un compito per il Claude che gira sul VPS, con il suo browser già logga
 - Su Workers l’URL sta in `wrangler.toml`; il token è il secret GitHub `VPS_MCP_TOKEN`, caricato
   dal workflow di deploy con `wrangler secret put` prima di pubblicare.
 
+## Posizione dell’utente
+
+Per domande come “una pizzeria qui vicino” il telefono manda la posizione:
+
+- all’avvio, insieme alla richiesta di sessione (`location: { lat, lon, accuracy }`): il backend la
+  traduce in un indirizzo con OpenStreetMap (Nominatim, gratuito) e la aggiunge alle istruzioni;
+- durante la conversazione, se l’utente si sposta di almeno 250 m (al massimo una volta al minuto):
+  il client chiede l’indirizzo a `POST /api/place` e lo aggiunge al contesto con
+  `session.thinking.append`, che non viene detto ad alta voce e non interrompe.
+
+I luoghi vicini li trova lo strumento `nearby` del gateway VPS (OpenStreetMap, circa un secondo).
+Le coordinate non finiscono nei log del backend. Per le chiamate SIP la posizione non c’è.
+
 ## Endpoint
 
 | Metodo e percorso | Autenticazione | Scopo |
@@ -122,6 +135,7 @@ diventa un compito per il Claude che gira sul VPS, con il suo browser già logga
 | `GET /health` | — | Stato del servizio |
 | `GET /api/voices` | — | Voci GPT-Live disponibili e voce predefinita |
 | `POST /api/session` | `Authorization: Bearer <APP_TOKEN>` | Riceve `{ "sdp": "<offer>", "voice": "marin" }`, crea la sessione GPT-Live, restituisce `{ "sessionId", "sdp" }` |
+| `POST /api/place` | `Authorization: Bearer <APP_TOKEN>` | Riceve `{ "location": { "lat", "lon" } }`, restituisce `{ "address", "lat", "lon" }` |
 | `POST /sip/webhook` | Firma del webhook OpenAI | Strada C: accetta o rifiuta le chiamate in arrivo (`live.transport.incoming`) |
 | `GET /` | — | Pagina web di prova |
 

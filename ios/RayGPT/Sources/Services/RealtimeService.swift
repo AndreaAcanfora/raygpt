@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import WebRTC
 
@@ -42,7 +43,7 @@ final class RealtimeService: NSObject {
     var isDataChannelOpen: Bool { dataChannel?.readyState == .open }
 
     /// Opens the session and returns its GPT-Live id. Events start arriving with `session.started`.
-    func connect(backend: BackendClient, voice: String) async throws -> String {
+    func connect(backend: BackendClient, voice: String, location: CLLocation? = nil) async throws -> String {
         let configuration = RTCConfiguration()
         configuration.sdpSemantics = .unifiedPlan
         configuration.iceServers = []
@@ -68,7 +69,7 @@ final class RealtimeService: NSObject {
         await waitForIceGathering(peerConnection)
         guard let offerSdp = peerConnection.localDescription?.sdp else { throw RealtimeError.missingLocalDescription }
 
-        let session = try await backend.createSession(offerSdp: offerSdp, voice: voice)
+        let session = try await backend.createSession(offerSdp: offerSdp, voice: voice, location: location)
         try await setRemoteDescription(RTCSessionDescription(type: .answer, sdp: session.sdp), on: peerConnection)
         return session.sessionId
     }

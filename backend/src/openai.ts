@@ -1,5 +1,8 @@
 import type { Config } from "./config.js";
+import { describeLocation, type UserLocation } from "./location.js";
 import {
+  locationHint,
+  NEARBY_DELEGATE_INSTRUCTIONS,
   VPS_DELEGATE_INSTRUCTIONS,
   VPS_HINT,
   VPS_SEARCH_DELEGATE_INSTRUCTIONS,
@@ -11,6 +14,8 @@ const REQUEST_TIMEOUT_MS = 15_000;
 
 export interface SessionOptions {
   voice: string;
+  /** Where the user is when the conversation starts (from the phone). */
+  location?: UserLocation;
 }
 
 /**
@@ -44,6 +49,11 @@ export function buildSessionConfig(config: Config, options: SessionOptions) {
       instructions = `${instructions}\n${VPS_HINT}`;
       delegateInstructions = `${delegateInstructions}\n${VPS_DELEGATE_INSTRUCTIONS}`;
     }
+    if (options.location) {
+      const where = describeLocation(options.location);
+      instructions = `${instructions}\n${locationHint(where)}`;
+      if (config.vps) delegateInstructions = `${delegateInstructions}\n${NEARBY_DELEGATE_INSTRUCTIONS}\nThe user's position at the start: ${where}.`;
+    }
     session.instructions = instructions;
     session.delegation = {
       type: "responses",
@@ -57,6 +67,8 @@ export function buildSessionConfig(config: Config, options: SessionOptions) {
         reasoning: { effort: "low" },
       },
     };
+  } else if (options.location) {
+    session.instructions = `${config.instructions}\n${locationHint(describeLocation(options.location))}`;
   }
   return session;
 }
