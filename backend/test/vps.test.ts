@@ -7,7 +7,7 @@ import { testConfig } from "./helpers.js";
 const TOKEN = "vps-token-0123456789abcdef0123456789abcdef";
 const VPS = {
   OPENAI_WEB_SEARCH_MODEL: "gpt-5.6-terra",
-  VPS_MCP_URL: "https://claude-vps.example.ts.net:10000/mcp",
+  VPS_MCP_URL: "https://vps.example.com/mcp",
   VPS_MCP_TOKEN: TOKEN,
 };
 
