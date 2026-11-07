@@ -5,7 +5,10 @@ import AppIntents
 struct StartConversationIntent: AppIntent {
     static let title: LocalizedStringResource = "Avvia Raggio"
     static let description = IntentDescription("Avvia una conversazione vocale con Raggio.")
-    static let openAppWhenRun = true
+    // Runs in the background without unlocking the iPhone (no Face ID): the conversation is a
+    // CallKit call, which already works on the lock screen and plays through the glasses.
+    static let openAppWhenRun = false
+    static let authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
 
     @MainActor
     func perform() async throws -> some IntentResult {
@@ -17,6 +20,7 @@ struct StartConversationIntent: AppIntent {
 struct StopConversationIntent: AppIntent {
     static let title: LocalizedStringResource = "Chiudi Raggio"
     static let description = IntentDescription("Chiude la conversazione in corso con Raggio.")
+    static let authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
 
     @MainActor
     func perform() async throws -> some IntentResult {
@@ -35,7 +39,8 @@ struct RayGPTShortcuts: AppShortcutsProvider {
         )
         AppShortcut(
             intent: StopConversationIntent(),
-            phrases: ["Chiudi \(.applicationName)"],
+            // "Chiudi <app>" alone is often taken by Siri as closing the app, so offer other verbs.
+            phrases: ["Chiudi \(.applicationName)", "Termina \(.applicationName)", "Ferma \(.applicationName)"],
             shortTitle: "Chiudi Raggio",
             systemImageName: "phone.down"
         )
