@@ -24,7 +24,7 @@ final class MetaVoiceInvocations {
         var description: String {
             switch self {
             case .notConfigured(let reason): return "Toolkit Meta non configurato: \(reason)"
-            case .notRegistered: return "RayGPT non è registrato in Meta AI"
+            case .notRegistered: return "Raggio non è registrato in Meta AI"
             case .registering: return "Registrazione in corso…"
             case .waitingForGlasses: return "In attesa degli occhiali"
             case .listening: return "In ascolto di “Ehi Meta, avvia Raggio”"

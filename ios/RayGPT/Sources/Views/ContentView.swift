@@ -59,7 +59,7 @@ struct ContentView: View {
                 TranscriptView(lines: conversation.lines)
             }
             .padding(.top)
-            .navigationTitle("RayGPT")
+            .navigationTitle("Raggio")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -97,7 +97,7 @@ private struct TranscriptView: View {
         ScrollViewReader { proxy in
             List(lines) { line in
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(line.speaker == .user ? "Tu" : "RayGPT")
+                    Text(line.speaker == .user ? "Tu" : "Raggio")
                         .font(.caption.bold())
                         .foregroundStyle(line.speaker == .user ? Color.secondary : Color.accentColor)
                     Text(line.text)

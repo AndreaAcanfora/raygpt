@@ -41,7 +41,7 @@ targets:
     info:
       path: Generated/Info.plist
       properties:
-        CFBundleDisplayName: RayGPT
+        CFBundleDisplayName: Raggio
         UILaunchScreen: {}
         UIBackgroundModes:
           - audio
@@ -53,7 +53,7 @@ targets:
           - external-accessory
         UISupportedExternalAccessoryProtocols:
           - com.meta.ar.wearable
-        NSBluetoothAlwaysUsageDescription: Serve per collegarsi agli occhiali Meta e ricevere “Hey Meta, start RayGPT”.
+        NSBluetoothAlwaysUsageDescription: Serve per collegarsi agli occhiali Meta e ricevere “Ehi Meta, avvia Raggio”.
         NSBonjourServices:
           - _bonjour._tcp
         # Meta AI calls RayGPT back through this scheme after registration.
@@ -71,8 +71,8 @@ targets:
             OptOut: true
           CrashReporting:
             OptOut: true
-        NSMicrophoneUsageDescription: RayGPT usa il microfono (degli occhiali, se collegati) per parlare con l’assistente.
-        NSLocationWhenInUseUsageDescription: RayGPT usa la tua posizione durante la conversazione per rispondere a domande come “una pizzeria qui vicino”.
+        NSMicrophoneUsageDescription: Raggio usa il microfono (degli occhiali, se collegati) per parlare con l’assistente.
+        NSLocationWhenInUseUsageDescription: Raggio usa la tua posizione durante la conversazione per rispondere a domande come “una pizzeria qui vicino”.
         NSLocalNetworkUsageDescription: Serve per il collegamento Wi-Fi con gli occhiali Meta e per un backend nella rete locale.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true

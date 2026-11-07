@@ -63,7 +63,7 @@ private struct MetaGlassesSection: View {
         Section {
             Text(invocations.status.description)
             if invocations.status == .notRegistered || isFailure {
-                Button("Registra RayGPT in Meta AI") {
+                Button("Registra Raggio in Meta AI") {
                     Task { await invocations.register() }
                 }
             }

@@ -30,7 +30,7 @@ final class CallService: NSObject {
     func startCall() async throws {
         let uuid = UUID()
         currentCall = uuid
-        let action = CXStartCallAction(call: uuid, handle: CXHandle(type: .generic, value: "RayGPT"))
+        let action = CXStartCallAction(call: uuid, handle: CXHandle(type: .generic, value: "Raggio"))
         action.isVideo = false
         do {
             try await callController.request(CXTransaction(action: action))
