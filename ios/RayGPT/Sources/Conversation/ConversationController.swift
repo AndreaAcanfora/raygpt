@@ -86,7 +86,7 @@ final class ConversationController {
             return
         }
         guard await AVAudioApplication.requestRecordPermission() else {
-            status = "Permesso microfono negato: Impostazioni → RayGPT → Microfono"
+            status = "Permesso microfono negato: Impostazioni → Raggio → Microfono"
             return
         }
 

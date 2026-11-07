@@ -24,10 +24,10 @@ final class MetaVoiceInvocations {
         var description: String {
             switch self {
             case .notConfigured(let reason): return "Toolkit Meta non configurato: \(reason)"
-            case .notRegistered: return "RayGPT non è registrato in Meta AI"
+            case .notRegistered: return "Raggio non è registrato in Meta AI"
             case .registering: return "Registrazione in corso…"
             case .waitingForGlasses: return "In attesa degli occhiali"
-            case .listening: return "In ascolto di “Hey Meta, start RayGPT”"
+            case .listening: return "In ascolto di “Ehi Meta, avvia Raggio”"
             case .failed(let reason): return "Errore: \(reason)"
             }
         }
@@ -76,6 +76,16 @@ final class MetaVoiceInvocations {
         status = .registering
         do {
             try await Wearables.shared.startRegistration()
+        } catch {
+            status = .failed(error.localizedDescription)
+        }
+    }
+
+    /// Opens Meta AI to remove RayGPT's registration, e.g. after a new Developer Center version.
+    func unregister() async {
+        guard configured else { return }
+        do {
+            try await Wearables.shared.startUnregistration()
         } catch {
             status = .failed(error.localizedDescription)
         }

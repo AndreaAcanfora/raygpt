@@ -63,19 +63,24 @@ private struct MetaGlassesSection: View {
         Section {
             Text(invocations.status.description)
             if invocations.status == .notRegistered || isFailure {
-                Button("Registra RayGPT in Meta AI") {
+                Button("Registra Raggio in Meta AI") {
                     Task { await invocations.register() }
                 }
             }
+            if invocations.status == .listening || invocations.status == .waitingForGlasses {
+                Button("Annulla registrazione", role: .destructive) {
+                    Task { await invocations.unregister() }
+                }
+            }
             if let last = invocations.lastInvocation {
-                Text("Ultimo “Hey Meta”: \(last.formatted(date: .omitted, time: .standard))")
+                Text("Ultimo “Ehi Meta”: \(last.formatted(date: .omitted, time: .standard))")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         } header: {
             Text("Occhiali Meta")
         } footer: {
-            Text("Serve il Developer Mode nell’app Meta AI e il nome “RayGPT” configurato nel Wearables Developer Center. Poi di’ “Hey Meta, start RayGPT”.")
+            Text("Serve il Developer Mode nell’app Meta AI e il nome “Raggio” configurato nel Wearables Developer Center. Poi di’ “Ehi Meta, avvia Raggio”.")
         }
     }
 
