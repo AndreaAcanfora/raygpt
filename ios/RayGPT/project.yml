@@ -18,6 +18,8 @@ settings:
     SWIFT_VERSION: "5.0"
     TARGETED_DEVICE_FAMILY: "1"
     CODE_SIGN_STYLE: Automatic
+    # Andrea's Apple team (Personal Team).
+    DEVELOPMENT_TEAM: PVX9XK893V
 targets:
   RayGPT:
     type: application
