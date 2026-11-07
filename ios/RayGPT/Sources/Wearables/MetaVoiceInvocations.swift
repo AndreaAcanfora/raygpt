@@ -44,6 +44,10 @@ final class MetaVoiceInvocations {
     private var listeningOn: DeviceIdentifier?
     private let tokens = ListenerTokenBag()
     private var retryTask: Task<Void, Never>?
+    /// Link state listener of the device we listen on: Meta delivers LaunchApp only to a stream
+    /// started while the glasses' link is up, so the stream restarts on every reconnection.
+    private var linkToken: (any AnyListenerToken)?
+    private var linkDevice: DeviceIdentifier?
 
     private init() {}
 
@@ -126,6 +130,7 @@ final class MetaVoiceInvocations {
             status = .waitingForGlasses
             return
         }
+        watchLink(of: device)
         guard device != listeningOn else { return }
 
         do {
@@ -139,6 +144,32 @@ final class MetaVoiceInvocations {
             listeningOn = nil
             status = .failed(error.localizedDescription)
             scheduleRetry()
+        }
+    }
+
+    private func watchLink(of device: DeviceIdentifier) {
+        guard device != linkDevice else { return }
+        let previous = linkToken
+        Task { await previous?.cancel() }
+        linkDevice = device
+        linkToken = Wearables.shared.deviceForIdentifier(device)?.addLinkStateListener { [weak self] state in
+            Task { @MainActor in self?.linkChanged(state, device: device) }
+        }
+    }
+
+    private func linkChanged(_ state: LinkState, device: DeviceIdentifier) {
+        guard device == linkDevice, case .registered = Wearables.shared.registrationState else { return }
+        switch state {
+        case .connected:
+            // Start again even if the stream looks active: after a link drop it no longer
+            // receives invocations.
+            if listeningOn != nil { stream?.stop() }
+            listeningOn = nil
+            startListeningIfPossible()
+        case .disconnected:
+            status = .waitingForGlasses
+        case .connecting:
+            break
         }
     }
 
@@ -167,6 +198,10 @@ final class MetaVoiceInvocations {
 
     private func stopListening() {
         retryTask?.cancel()
+        let previous = linkToken
+        Task { await previous?.cancel() }
+        linkToken = nil
+        linkDevice = nil
         if listeningOn != nil { stream?.stop() }
         listeningOn = nil
     }
