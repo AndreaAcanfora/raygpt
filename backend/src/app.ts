@@ -5,6 +5,7 @@ import type { Config } from "./config.js";
 import { RecentIds, SessionLimiter } from "./limits.js";
 import { acceptSipCall, createWebRtcSession, OpenAIError, rejectSipCall } from "./openai.js";
 import { callerNumber, maskNumber, type SipHeader } from "./sip.js";
+import { parseLocation, reverseGeocode } from "./location.js";
 import { isAllowedVoice, VOICES } from "./voices.js";
 import { verifyWebhook } from "./webhook.js";
 
@@ -58,7 +59,7 @@ export function createApp({ config, fetch: fetchImpl = fetch, log = jsonLogger, 
       return c.json({ error: "unauthorized" }, 401);
     }
 
-    const body = await c.req.json().catch(() => undefined) as { sdp?: unknown; voice?: unknown } | undefined;
+    const body = await c.req.json().catch(() => undefined) as { sdp?: unknown; voice?: unknown; location?: unknown } | undefined;
     const sdp = body?.sdp;
     if (typeof sdp !== "string" || !sdp.startsWith("v=0") || sdp.length > MAX_SDP_LENGTH) {
       return c.json({ error: "invalid_sdp" }, 400);
@@ -68,6 +69,9 @@ export function createApp({ config, fetch: fetchImpl = fetch, log = jsonLogger, 
       return c.json({ error: "invalid_voice" }, 400);
     }
 
+    const location = parseLocation(body?.location);
+    if (location === null) return c.json({ error: "invalid_location" }, 400);
+
     if (!limiter.tryAcquire()) {
       log("session.rate_limited");
       return c.json({ error: "daily_session_limit" }, 429);
@@ -75,12 +79,25 @@ export function createApp({ config, fetch: fetchImpl = fetch, log = jsonLogger, 
 
     const startedAt = now();
     try {
-      const session = await createWebRtcSession(config, sdp, { voice }, fetchImpl);
-      log("session.created", { sessionId: session.sessionId, voice, ms: now() - startedAt });
+      if (location) location.address = await reverseGeocode(location, fetchImpl);
+      const session = await createWebRtcSession(config, sdp, { voice, location }, fetchImpl);
+      // Coordinates are not logged: only whether the phone sent them.
+      log("session.created", { sessionId: session.sessionId, voice, location: Boolean(location), ms: now() - startedAt });
       return c.json({ sessionId: session.sessionId, sdp: session.answerSdp });
     } catch (error) {
       return openAIFailure(c, error, log, "session.failed");
     }
+  });
+
+  // Street address for a new position during a conversation; the client then adds it to the
+  // session context (session.thinking.append) so the model knows where the user is now.
+  app.post("/api/place", bodyLimit({ maxSize: 4 * 1024 }), async (c) => {
+    const token = bearerToken(c.req.header("Authorization"));
+    if (!token || !safeEqual(token, config.appToken)) return c.json({ error: "unauthorized" }, 401);
+    const body = await c.req.json().catch(() => undefined) as { location?: unknown } | undefined;
+    const location = parseLocation(body?.location);
+    if (!location) return c.json({ error: "invalid_location" }, 400);
+    return c.json({ address: (await reverseGeocode(location, fetchImpl)) ?? null, lat: location.lat, lon: location.lon });
   });
 
   app.post("/sip/webhook", async (c) => {

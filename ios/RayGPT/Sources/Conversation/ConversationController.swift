@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreLocation
 import Observation
 import WebRTC
 
@@ -38,6 +39,10 @@ final class ConversationController {
     private(set) var route = AudioSessionManager.routeDescription()
 
     private let call = CallService()
+    private let location = LocationService()
+    private var startLocation: Task<CLLocation?, Never>?
+    private var lastSentLocation: (location: CLLocation, at: Date)?
+    private static let positionUpdateInterval: TimeInterval = 60
     private var realtime: RealtimeService?
     private var requestedAt: Date?
     private var startedAt: Date?
@@ -56,6 +61,9 @@ final class ConversationController {
         }
         call.onCallEnded = { [weak self] in
             Task { @MainActor in await self?.stop(reason: "call_ended") }
+        }
+        location.onMove = { [weak self] newLocation in
+            MainActor.assumeIsolated { self?.sendPosition(newLocation) }
         }
         call.onMuteChanged = { [weak self] muted in
             Task { @MainActor in self?.applyMute(muted) }
@@ -91,6 +99,9 @@ final class ConversationController {
         isMuted = false
         lastSpeaker = nil
         requestedAt = Date()
+        lastSentLocation = nil
+        // In parallel with the call setup: the position goes with the session request.
+        startLocation = Task { await location.current() }
         do {
             try await call.startCall()
         } catch {
@@ -104,6 +115,7 @@ final class ConversationController {
         status = "Chiusura…"
         limitsTimer?.invalidate()
         limitsTimer = nil
+        location.stopUpdates()
 
         if let realtime, realtime.isDataChannelOpen, !sessionClosed {
             realtime.send(.close)
@@ -139,7 +151,9 @@ final class ConversationController {
         realtime = service
 
         do {
-            _ = try await service.connect(backend: backend, voice: settings.voice)
+            let position = await startLocation?.value
+            if let position { lastSentLocation = (position, Date()) }
+            _ = try await service.connect(backend: backend, voice: settings.voice, location: position)
             if phase == .connecting { status = "In attesa di GPT-Live…" }
         } catch {
             fail(error.localizedDescription)
@@ -156,6 +170,7 @@ final class ConversationController {
             status = "In ascolto: parla pure"
             call.reportConnected()
             startLimitsTimer()
+            location.startUpdates()
         case .inputTranscript(let text):
             append(text, from: .user)
             if phase == .active, let line = lines.last, line.speaker == .user, VoiceCommands.isStop(line.text) {
@@ -196,6 +211,19 @@ final class ConversationController {
         }
         lastSpeaker = speaker
         lastDeltaAt = now
+    }
+
+    /// Tells GPT-Live where the user is now, after a move (LocationService.distanceFilter).
+    private func sendPosition(_ newLocation: CLLocation) {
+        guard phase == .active, let backend = settings.backendClient() else { return }
+        if let last = lastSentLocation, Date().timeIntervalSince(last.at) < Self.positionUpdateInterval { return }
+        lastSentLocation = (newLocation, Date())
+        Task {
+            guard let place = try? await backend.place(newLocation), phase == .active,
+                  let realtime, realtime.isDataChannelOpen else { return }
+            let address = place.address.map { "\($0) " } ?? ""
+            realtime.send(.thinking("The user's position is now \(address)(lat \(place.lat), lon \(place.lon))."))
+        }
     }
 
     private func applyMute(_ muted: Bool) {

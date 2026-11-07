@@ -44,6 +44,19 @@ When the user needs other current facts (opening hours, news, timetables, prices
 places), call vps_task asking it to search the web and answer in two or three sentences, with the times,
 dates and numbers the user asked for. Then answer from its result, concisely, for a spoken conversation.`;
 
+/** Added when the phone sent the user's position. */
+export function locationHint(where: string): string {
+  return `- The user is at ${where} at the start of this conversation; updated positions may arrive later.
+  Use the latest one for anything about "near me", directions, distances or the local area, without
+  asking where they are. When you delegate something about nearby places or routes, include those
+  coordinates in the request.`;
+}
+
+/** Backend model instructions for places near the user (gateway nearby tool). */
+export const NEARBY_DELEGATE_INSTRUCTIONS = `For places near the user (restaurants, pharmacies, ATMs, shops...) call the nearby tool
+with the coordinates in the request, or the start position below; for richer questions (reviews, open now,
+the best one) call vps_task with the coordinates. Give the two or three closest, with the distance.`;
+
 /** Instructions for the backend model that runs web searches for GPT-Live. */
 export const WEB_SEARCH_DELEGATE_INSTRUCTIONS = `Use web search when current facts are needed.
 Return concise, grounded results for a spoken conversation, in the user's language.

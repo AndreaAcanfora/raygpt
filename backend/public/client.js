@@ -27,6 +27,7 @@ function newSession() {
     seconds: 0, muted: false, closing: false, timer: null, onClosed: null,
     lastSpeaker: null, lastLine: null, lastDeltaAt: 0,
     lastUserDeltaAt: 0, responseTimes: [],
+    token: "", geoWatch: null, sentPosition: null, sentAt: 0,
   };
 }
 
@@ -65,7 +66,10 @@ async function start() {
   localStorage.setItem("raygpt.maxMinutes", ui.maxMinutes.value);
 
   session = newSession();
+  session.token = token;
   session.audio = new AudioContext();
+  // Ask for the position right away, in parallel with the microphone and the SDP offer.
+  const positionPromise = currentPosition();
   ui.transcript.replaceChildren();
   ui.events.textContent = "";
   setButtons("connecting");
@@ -101,10 +105,18 @@ async function start() {
   // As in OpenAI's WebRTC guide: send the offer once ICE gathering is complete (or after 10 s).
   await waitForIceGathering(pc, ICE_GATHERING_TIMEOUT_MS);
 
+  const position = await positionPromise;
+  if (position) {
+    session.sentPosition = position;
+    session.sentAt = Date.now();
+    logEvent(`posizione: inviata (precisione ${Math.round(position.accuracy)} m)`);
+  } else {
+    logEvent("posizione: non disponibile");
+  }
   const response = await fetch("/api/session", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ sdp: pc.localDescription.sdp, voice: ui.voice.value }),
+    body: JSON.stringify({ sdp: pc.localDescription.sdp, voice: ui.voice.value, location: position ?? undefined }),
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(describeError(response.status, body));
@@ -132,6 +144,7 @@ function cleanup(reason) {
   const current = session;
   session = null;
   clearInterval(current.timer);
+  if (current.geoWatch !== null) navigator.geolocation.clearWatch(current.geoWatch);
   current.mic?.getTracks().forEach((track) => track.stop());
   current.pc?.close();
   ui.remote.srcObject = null;
@@ -140,6 +153,62 @@ function cleanup(reason) {
   setButtons("idle");
   setStatus(`Chiusa (${describeReason(reason)})`);
   renderStats(current);
+}
+
+// ── Position ────────────────────────────────────────────────────────────
+// Sent when the conversation starts; afterwards, a move of MOVE_METRES (at most every
+// MOVE_INTERVAL_MS) is added to the session context without interrupting speech.
+const MOVE_METRES = 250;
+const MOVE_INTERVAL_MS = 60_000;
+
+function currentPosition() {
+  if (!("geolocation" in navigator)) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude, accuracy: p.coords.accuracy }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 120_000 },
+    );
+  });
+}
+
+function metres(a, b) {
+  const r = (d) => (d * Math.PI) / 180;
+  const h = Math.sin(r(b.lat - a.lat) / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(r(b.lon - a.lon) / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
+}
+
+function watchPosition() {
+  if (!("geolocation" in navigator) || !session) return;
+  session.geoWatch = navigator.geolocation.watchPosition((p) => {
+    const position = { lat: p.coords.latitude, lon: p.coords.longitude, accuracy: p.coords.accuracy };
+    if (!session || session.dc?.readyState !== "open") return;
+    const moved = session.sentPosition ? metres(session.sentPosition, position) : Infinity;
+    if (moved < MOVE_METRES || Date.now() - session.sentAt < MOVE_INTERVAL_MS) return;
+    session.sentPosition = position;
+    session.sentAt = Date.now();
+    sendPosition(position).catch((error) => logEvent(`posizione: aggiornamento non riuscito (${error.message})`));
+  }, () => {}, { enableHighAccuracy: true, maximumAge: 30_000 });
+}
+
+async function sendPosition(position) {
+  const current = session;
+  const response = await fetch("/api/place", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${current.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ location: position }),
+  });
+  const place = await response.json().catch(() => ({}));
+  if (!response.ok || session !== current || current.dc?.readyState !== "open") return;
+  const where = `${place.address ? `${place.address} ` : ""}(lat ${place.lat}, lon ${place.lon})`;
+  // thinking.append adds context without being spoken and without interrupting.
+  current.dc.send(JSON.stringify({
+    type: "session.thinking.append",
+    event_id: `pos_${Date.now()}`,
+    delegation_id: null,
+    content: `The user's position is now ${where}.`,
+  }));
+  logEvent(`posizione: aggiornata (precisione ${Math.round(position.accuracy)} m)`);
 }
 
 function fail(error) {
@@ -170,6 +239,7 @@ function handleEvent(event) {
       setButtons("active");
       setStatus("In ascolto: parla pure");
       beep(session.audio, 880, 0.12);
+      watchPosition();
       break;
     case "session.input_transcript.delta":
       session.lastUserDeltaAt = now;

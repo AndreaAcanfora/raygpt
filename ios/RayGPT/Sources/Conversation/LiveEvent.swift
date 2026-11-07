@@ -53,14 +53,19 @@ enum ClientEvent {
     case close
     case mute
     case unmute
+    /// Context for later replies, not spoken and not interrupting (e.g. the user's new position).
+    case thinking(String)
 
     var data: Data {
-        let type: String
+        let object: [String: Any]
         switch self {
-        case .close: type = "session.close"
-        case .mute: type = "session.input_audio.mute"
-        case .unmute: type = "session.input_audio.unmute"
+        case .close: object = ["type": "session.close"]
+        case .mute: object = ["type": "session.input_audio.mute"]
+        case .unmute: object = ["type": "session.input_audio.unmute"]
+        case .thinking(let content):
+            object = ["type": "session.thinking.append", "event_id": "ctx_\(UUID().uuidString)",
+                      "delegation_id": NSNull(), "content": content]
         }
-        return Data("{\"type\":\"\(type)\"}".utf8)
+        return (try? JSONSerialization.data(withJSONObject: object)) ?? Data()
     }
 }
