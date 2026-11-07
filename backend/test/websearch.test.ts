@@ -23,6 +23,7 @@ describe("web search delegation", () => {
         instructions: expect.stringContaining("web search"),
         tools: [{ type: "web_search" }],
         tool_choice: "auto",
+        reasoning: { effort: "low" },
       },
     });
     expect(session.instructions).toBe(`${config.instructions}\n${WEB_SEARCH_HINT}`);

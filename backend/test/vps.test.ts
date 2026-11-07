@@ -46,6 +46,7 @@ describe("VPS tool (MCP via delegation)", () => {
     };
     expect(session.delegation.responses.tools.map((t) => t.type)).toEqual(["mcp"]);
     expect(session.delegation.responses.instructions).toContain("search the web");
+    expect(session.delegation.responses.instructions).toContain("weather tool");
     expect(session.delegation.responses.instructions).toContain("vps_task");
   });
 

@@ -37,7 +37,8 @@ the user asks how it went, call vps_task_status. Report only what the tool retur
 spoken conversation. If the tool asks a question, pass it to the user; continue with session_id.`;
 
 /** Backend model instructions when web searches go to the VPS agent instead of web_search. */
-export const VPS_SEARCH_DELEGATE_INSTRUCTIONS = `When the user needs current facts (opening hours, weather, news, timetables, prices,
+export const VPS_SEARCH_DELEGATE_INSTRUCTIONS = `For weather questions call the weather tool (it answers in about a second), never vps_task.
+When the user needs other current facts (opening hours, news, timetables, prices,
 places), call vps_task asking it to search the web and answer in two or three sentences, with the times,
 dates and numbers the user asked for. Then answer from its result, concisely, for a spoken conversation.`;
 
