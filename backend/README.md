@@ -100,6 +100,19 @@ Durante la ricerca la pagina di prova e l’app mostrano “Sto cercando…”.
 - Costo a parte rispetto ai minuti vocali: token del modello di backend più le ricerche web
   (pagina prezzi OpenAI). Vuoto = disattivata.
 
+## Il VPS come strumento (facoltativo)
+
+Con `VPS_MCP_URL` e `VPS_MCP_TOKEN` impostati, il modello di backend della ricerca web riceve
+anche il server MCP del VPS (cb-gateway): “usa il vps per mandare un messaggio su WhatsApp a…”
+diventa un compito per il Claude che gira sul VPS, con il suo browser già loggato e GitHub.
+
+- Richiede `OPENAI_WEB_SEARCH_MODEL`: lo strumento passa dallo stesso modello di backend.
+- È OpenAI a chiamare il VPS, con il token come `Authorization: Bearer`; l’app non cambia.
+- Un compito può durare un paio di minuti: se non è finito, RayGPT lo dice e controlla quando
+  gli si chiede “com’è andata?” (`vps_task_status`).
+- Su Workers l’URL sta in `wrangler.toml`; il token è il secret GitHub `VPS_MCP_TOKEN`, caricato
+  dal workflow di deploy con `wrangler secret put` prima di pubblicare.
+
 ## Endpoint
 
 | Metodo e percorso | Autenticazione | Scopo |

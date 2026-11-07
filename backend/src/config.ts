@@ -20,6 +20,11 @@ export interface Config {
    * tool). Undefined disables web search.
    */
   webSearchModel?: string;
+  /**
+   * The user's VPS as an MCP server (cb-gateway): GPT-Live's backend model can hand it tasks
+   * (WhatsApp Web, websites, GitHub) run by Claude Code there. Needs `webSearchModel`.
+   */
+  vps?: { url: string; token: string };
   /** Apple Team ID for the universal link file (apple-app-site-association). */
   appleTeamId?: string;
   /** Bundle identifier of the iOS app. */
@@ -55,6 +60,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     webhookSecret: env.OPENAI_WEBHOOK_SECRET?.trim() || undefined,
     sipCallerAllowlist: parseAllowlist(env.SIP_CALLER_ALLOWLIST),
     webSearchModel: env.OPENAI_WEB_SEARCH_MODEL?.trim() || undefined,
+    vps: parseVps(env),
     appleTeamId: parseTeamId(env.APPLE_TEAM_ID),
     iosBundleId: env.IOS_BUNDLE_ID?.trim() || "com.andreaacanfora.raygpt.app",
     maxSessionsPerDay: positiveInt(env, "MAX_SESSIONS_PER_DAY", 50),
@@ -76,6 +82,19 @@ function positiveInt(env: Record<string, string | undefined>, name: string, fall
     throw new ConfigError(`${name} must be a positive integer`);
   }
   return value;
+}
+
+function parseVps(env: Record<string, string | undefined>): Config["vps"] {
+  const url = env.VPS_MCP_URL?.trim();
+  const token = env.VPS_MCP_TOKEN?.trim();
+  if (!url && !token) return undefined;
+  if (!url || !token) throw new ConfigError("VPS_MCP_URL and VPS_MCP_TOKEN must be set together");
+  if (!/^https:\/\/\S+$/.test(url)) throw new ConfigError("VPS_MCP_URL must be an https:// URL");
+  if (token.length < 32) throw new ConfigError("VPS_MCP_TOKEN must be at least 32 characters long");
+  if (!env.OPENAI_WEB_SEARCH_MODEL?.trim()) {
+    throw new ConfigError("The VPS tool runs through the backend model: set OPENAI_WEB_SEARCH_MODEL too");
+  }
+  return { url, token };
 }
 
 function parseTeamId(raw: string | undefined): string | undefined {
