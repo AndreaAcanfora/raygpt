@@ -80,7 +80,7 @@ private struct MetaGlassesSection: View {
         } header: {
             Text("Occhiali Meta")
         } footer: {
-            Text("Serve il Developer Mode nell’app Meta AI e il nome “Raggio” configurato nel Wearables Developer Center. Poi di’ “Ehi Meta, avvia Raggio”.")
+            Text("In Meta AI: Developer Mode spento e, in App connections → Raggio, “Launch with Hey Meta” attivo. Poi di’ “Ehi Meta, apri l’app Raggio”.")
         }
     }
 
