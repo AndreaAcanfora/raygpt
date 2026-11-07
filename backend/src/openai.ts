@@ -1,5 +1,11 @@
 import type { Config } from "./config.js";
-import { WEB_SEARCH_DELEGATE_INSTRUCTIONS, WEB_SEARCH_HINT } from "./instructions.js";
+import {
+  VPS_DELEGATE_INSTRUCTIONS,
+  VPS_HINT,
+  VPS_SEARCH_DELEGATE_INSTRUCTIONS,
+  WEB_SEARCH_DELEGATE_INSTRUCTIONS,
+  WEB_SEARCH_HINT,
+} from "./instructions.js";
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -20,13 +26,31 @@ export function buildSessionConfig(config: Config, options: SessionOptions) {
   if (config.webSearchModel) {
     // GPT-Live hands requests needing current facts to a backend model with web search
     // (Responses delegation, docs/PROJECT.md §3.9). Billed separately from the voice minutes.
-    session.instructions = `${config.instructions}\n${WEB_SEARCH_HINT}`;
+    const searchOnVps = config.webSearchVia === "vps" && config.vps !== undefined;
+    const tools: Array<Record<string, unknown>> = searchOnVps ? [] : [{ type: "web_search" }];
+    let instructions = `${config.instructions}\n${WEB_SEARCH_HINT}`;
+    let delegateInstructions = searchOnVps ? VPS_SEARCH_DELEGATE_INSTRUCTIONS : WEB_SEARCH_DELEGATE_INSTRUCTIONS;
+    if (config.vps) {
+      // OpenAI calls the VPS MCP server directly; Live passes the headers through and never
+      // returns them in the session config.
+      tools.push({
+        type: "mcp",
+        server_label: "vps",
+        server_description: "The user's VPS: a Claude agent with a logged-in browser (WhatsApp Web, websites) and GitHub.",
+        server_url: config.vps.url,
+        headers: { Authorization: `Bearer ${config.vps.token}` },
+        require_approval: "never",
+      });
+      instructions = `${instructions}\n${VPS_HINT}`;
+      delegateInstructions = `${delegateInstructions}\n${VPS_DELEGATE_INSTRUCTIONS}`;
+    }
+    session.instructions = instructions;
     session.delegation = {
       type: "responses",
       responses: {
         model: config.webSearchModel,
-        instructions: WEB_SEARCH_DELEGATE_INSTRUCTIONS,
-        tools: [{ type: "web_search" }],
+        instructions: delegateInstructions,
+        tools,
         tool_choice: "auto",
       },
     };
