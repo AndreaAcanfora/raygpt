@@ -52,6 +52,9 @@ export function buildSessionConfig(config: Config, options: SessionOptions) {
         instructions: delegateInstructions,
         tools,
         tool_choice: "auto",
+        // The backend model only routes the request and summarises the result for speech:
+        // low effort answers faster and costs fewer tokens.
+        reasoning: { effort: "low" },
       },
     };
   }
