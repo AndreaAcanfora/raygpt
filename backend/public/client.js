@@ -308,11 +308,12 @@ function checkLimits() {
 
 // --- Voice commands --------------------------------------------------------
 
-// "Stop RayGPT" / "Chiudi RayGPT" (also "ferma", "termina", "spegni", in either order) close the conversation.
+// "Stop Raggio" / "Chiudi Raggio" (also "ferma", "termina", "spegni", in either order, and the old name
+// "RayGPT") close the conversation. "(?!n)" keeps "ragionare" out.
 // Transcripts spell the name in many ways ("Ray GPT", "rei gpt", "Ray gipiti"), so the text is
 // folded to lowercase letters and digits before matching.
 const STOP_COMMAND =
-  /(stop+|chiudi|ferma|termina|spegni)r[aeiy]+(g|j)[ie]?(p|b)[ie]?t|r[aeiy]+(g|j)[ie]?(p|b)[ie]?t(stop+|chiudi|ferma|termina|spegni)/;
+  /(?:stop+|chiudi|ferma|termina|spegni)(?:r[aeiy]+(?:g|j)[ie]?(?:p|b)[ie]?t|ra[gj]+i?o(?!n))|(?:r[aeiy]+(?:g|j)[ie]?(?:p|b)[ie]?t|ra[gj]+i?o(?!n))(?:stop+|chiudi|ferma|termina|spegni)/;
 
 function isStopCommand(text) {
   if (!text) return false;
