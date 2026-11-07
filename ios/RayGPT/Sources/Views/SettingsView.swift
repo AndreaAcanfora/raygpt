@@ -68,14 +68,14 @@ private struct MetaGlassesSection: View {
                 }
             }
             if let last = invocations.lastInvocation {
-                Text("Ultimo “Hey Meta”: \(last.formatted(date: .omitted, time: .standard))")
+                Text("Ultimo “Ehi Meta”: \(last.formatted(date: .omitted, time: .standard))")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         } header: {
             Text("Occhiali Meta")
         } footer: {
-            Text("Serve il Developer Mode nell’app Meta AI e il nome “RayGPT” configurato nel Wearables Developer Center. Poi di’ “Hey Meta, start RayGPT”.")
+            Text("Serve il Developer Mode nell’app Meta AI e il nome “Raggio” configurato nel Wearables Developer Center. Poi di’ “Ehi Meta, avvia Raggio”.")
         }
     }
 

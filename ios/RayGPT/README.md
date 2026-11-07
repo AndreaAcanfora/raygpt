@@ -59,12 +59,12 @@ Nell’app, icona ingranaggio:
 
 Annotare i risultati in `docs/VERIFICATION.md` (Fase 6).
 
-## Attivare “Hey Meta, start RayGPT”
+## Attivare “Ehi Meta, avvia Raggio”
 
 1. **Developer Mode** nell’app Meta AI: Impostazioni → Info app → 5 tocchi sul numero di
    versione → Developer Mode → Abilita. Firmware occhiali V128 e app Meta AI V292 o successive.
 2. **Wearables Developer Center** (https://wearables.developer.meta.com): creare l’account e
-   un’app con bundle identifier `com.andreaacanfora.raygpt.app`, nome dell’app **RayGPT**
+   un’app con bundle identifier `com.andreaacanfora.raygpt.app`, nome dell’app **Raggio**
    (è la parola chiave del comando vocale), e una versione che includa il permesso
    Voice Invocation.
 3. Se il Developer Center fornisce `MetaAppID` e `ClientToken`, metterli in
@@ -75,10 +75,14 @@ Annotare i risultati in `docs/VERIFICATION.md` (Fase 6).
    ```
    e rigenerare il progetto (`xcodegen generate`). Senza, l’app usa il Developer Mode (`META_APP_ID = 0`).
 4. Nell’app: ingranaggio → **Occhiali Meta** → **Registra RayGPT in Meta AI**, approvare in Meta AI.
-   Lo stato deve diventare “In ascolto di “Hey Meta, start RayGPT””.
-5. Dire **“Hey Meta, start RayGPT”**: Meta AI avvia l’app e parte la conversazione.
-   Per chiuderla: **“stop RayGPT”**.
+   Lo stato deve diventare “In ascolto di “Ehi Meta, avvia Raggio””.
+5. Dire **“Ehi Meta, avvia Raggio”**: Meta AI avvia l’app e parte la conversazione.
+   Per chiuderla: **“stop Raggio”**.
 
 In Developer Mode resta registrata una sola app di terze parti: registrare RayGPT cancella
 la registrazione dei sample Meta, e viceversa. Da verificare: funzionamento a iPhone bloccato
-e comando in italiano (“Hey Meta, avvia RayGPT”).
+e il comando “chiudi” in italiano.
+
+Il nome nel Developer Center è **Raggio** e non RayGPT: con gli occhiali in italiano
+Meta AI trascriveva “RayGPT” come “regbet” e non trovava l’app. Serve una parola che il
+riconoscimento vocale nella lingua degli occhiali scriva sempre allo stesso modo.

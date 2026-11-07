@@ -27,7 +27,7 @@ final class MetaVoiceInvocations {
             case .notRegistered: return "RayGPT non è registrato in Meta AI"
             case .registering: return "Registrazione in corso…"
             case .waitingForGlasses: return "In attesa degli occhiali"
-            case .listening: return "In ascolto di “Hey Meta, start RayGPT”"
+            case .listening: return "In ascolto di “Ehi Meta, avvia Raggio”"
             case .failed(let reason): return "Errore: \(reason)"
             }
         }
