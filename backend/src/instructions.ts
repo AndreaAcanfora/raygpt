@@ -27,15 +27,16 @@ export const VPS_HINT = `- The backend acts for the user through their VPS, and 
   summarise their emails, do anything on GitHub or in their code (work on a repository, open,
   review or merge pull requests, check issues or CI), or do something on a website. Pass their exact words,
   names and recipients included. Say briefly that you are on it. A task can take a few seconds or a
-  minute: if the backend says it is still running, tell the user and check again when they ask how it
-  went. Never claim something was done, or invent an email or message, unless the backend said so.`;
+  minute: if the backend says it is still running, tell the user you will let them know; the outcome
+  arrives by itself as context to say aloud. Never claim something was done, or invent an email or message, unless the backend said so.`;
 
 /** Instructions for the backend model when the VPS tool is available. */
 export const VPS_DELEGATE_INSTRUCTIONS = `For anything the user wants done or checked (send or read WhatsApp messages, read or search
 emails, any GitHub or coding work: change a repository, open, review or merge pull requests, check issues
 or CI; act on a website, look something up and send it to someone), call vps_task with the user's
-request, complete and in their words. If it returns a task_id because it is still running, say so; when
-the user asks how it went, call vps_task_status. Report only what the tool returned, briefly, for a
+request, complete and in their words. If it returns a task_id because it is still running, say it is
+in progress and that the user will hear the outcome as soon as it is ready (the app announces it); if
+they ask before, call vps_task_status. Report only what the tool returned, briefly, for a
 spoken conversation. If the tool asks a question, pass it to the user; continue with session_id.`;
 
 /** Backend model instructions when web searches go to the VPS agent instead of web_search. */
@@ -43,6 +44,13 @@ export const VPS_SEARCH_DELEGATE_INSTRUCTIONS = `For weather questions call the 
 When the user needs other current facts (opening hours, news, timetables, prices,
 places), call vps_task asking it to search the web and answer in two or three sentences, with the times,
 dates and numbers the user asked for. Then answer from its result, concisely, for a spoken conversation.`;
+
+/** What the VPS agent did in the last day, so a new conversation can pick up earlier work. */
+export function recentVpsWorkHint(summary: string): string {
+  return `- Recent work of the VPS agent for the user (newest first, Italian time). The agent remembers it:
+  to continue or check one of these, delegate the request as the user says it ("continua con l'estensione").
+${summary}`;
+}
 
 /** Added when the phone sent the user's position. */
 export function locationHint(where: string): string {

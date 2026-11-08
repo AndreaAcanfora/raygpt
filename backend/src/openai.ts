@@ -2,6 +2,7 @@ import type { Config } from "./config.js";
 import { describeLocation, type UserLocation } from "./location.js";
 import {
   locationHint,
+  recentVpsWorkHint,
   NEARBY_DELEGATE_INSTRUCTIONS,
   VPS_DELEGATE_INSTRUCTIONS,
   VPS_HINT,
@@ -16,6 +17,8 @@ export interface SessionOptions {
   voice: string;
   /** Where the user is when the conversation starts (from the phone). */
   location?: UserLocation;
+  /** Recent VPS tasks (recentWorkSummary), so the conversation can continue earlier work. */
+  recentVpsWork?: string;
 }
 
 /**
@@ -48,6 +51,11 @@ export function buildSessionConfig(config: Config, options: SessionOptions) {
       });
       instructions = `${instructions}\n${VPS_HINT}`;
       delegateInstructions = `${delegateInstructions}\n${VPS_DELEGATE_INSTRUCTIONS}`;
+      if (options.recentVpsWork) {
+        const recent = recentVpsWorkHint(options.recentVpsWork);
+        instructions = `${instructions}\n${recent}`;
+        delegateInstructions = `${delegateInstructions}\n${recent}`;
+      }
     }
     if (options.location) {
       const where = describeLocation(options.location);

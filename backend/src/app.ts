@@ -7,6 +7,7 @@ import { acceptSipCall, createWebRtcSession, OpenAIError, rejectSipCall } from "
 import { callerNumber, maskNumber, type SipHeader } from "./sip.js";
 import { parseLocation, reverseGeocode } from "./location.js";
 import { isAllowedVoice, VOICES } from "./voices.js";
+import { listVpsTasks, recentWorkSummary } from "./vps.js";
 import { verifyWebhook } from "./webhook.js";
 
 export type Logger = (event: string, fields?: Record<string, unknown>) => void;
@@ -23,6 +24,9 @@ export interface AppDependencies {
 }
 
 const MAX_SDP_LENGTH = 100_000;
+/** How far back a new conversation looks for VPS work to continue, and how long it waits for it. */
+const RECENT_VPS_WORK_MS = 24 * 3600_000;
+const RECENT_VPS_WORK_TIMEOUT_MS = 1500;
 
 export function createApp({ config, fetch: fetchImpl = fetch, log = jsonLogger, now = Date.now }: AppDependencies) {
   const app = new Hono();
@@ -79,10 +83,21 @@ export function createApp({ config, fetch: fetchImpl = fetch, log = jsonLogger, 
 
     const startedAt = now();
     try {
-      if (location) location.address = await reverseGeocode(location, fetchImpl);
-      const session = await createWebRtcSession(config, sdp, { voice, location }, fetchImpl);
+      // Both are optional context: a slow or failing lookup only leaves it out.
+      const [address, recentVpsWork] = await Promise.all([
+        location ? reverseGeocode(location, fetchImpl) : undefined,
+        config.vps
+          ? listVpsTasks(config.vps, new Date(startedAt - RECENT_VPS_WORK_MS), fetchImpl, RECENT_VPS_WORK_TIMEOUT_MS)
+            .then((tasks) => recentWorkSummary(tasks), () => undefined)
+          : undefined,
+      ]);
+      if (location) location.address = address;
+      const session = await createWebRtcSession(config, sdp, { voice, location, recentVpsWork }, fetchImpl);
       // Coordinates are not logged: only whether the phone sent them.
-      log("session.created", { sessionId: session.sessionId, voice, location: Boolean(location), ms: now() - startedAt });
+      log("session.created", {
+        sessionId: session.sessionId, voice, location: Boolean(location), recentVpsWork: Boolean(recentVpsWork),
+        ms: now() - startedAt,
+      });
       return c.json({ sessionId: session.sessionId, sdp: session.answerSdp });
     } catch (error) {
       return openAIFailure(c, error, log, "session.failed");
@@ -98,6 +113,37 @@ export function createApp({ config, fetch: fetchImpl = fetch, log = jsonLogger, 
     const location = parseLocation(body?.location);
     if (!location) return c.json({ error: "invalid_location" }, 400);
     return c.json({ address: (await reverseGeocode(location, fetchImpl)) ?? null, lat: location.lat, lon: location.lon });
+  });
+
+  // Tasks the VPS agent got during a conversation: the client polls them to keep the conversation
+  // open while the agent works and to have the outcome said as soon as it is ready.
+  app.get("/api/vps/tasks", async (c) => {
+    const token = bearerToken(c.req.header("Authorization"));
+    if (!token || !safeEqual(token, config.appToken)) return c.json({ error: "unauthorized" }, 401);
+    if (!config.vps) return c.json({ error: "vps_not_configured" }, 404);
+    const since = new Date(c.req.query("since") ?? "");
+    if (Number.isNaN(since.getTime())) return c.json({ error: "invalid_since" }, 400);
+    try {
+      return c.json({ tasks: await listVpsTasks(config.vps, since, fetchImpl) });
+    } catch (error) {
+      log("vps.tasks_failed", { message: (error as Error).message });
+      return c.json({ error: "vps_unavailable" }, 502);
+    }
+  });
+
+  // Why a conversation ended, reported by the client (idle, voice command, connection lost...).
+  app.post("/api/session/end", bodyLimit({ maxSize: 4 * 1024 }), async (c) => {
+    const token = bearerToken(c.req.header("Authorization"));
+    if (!token || !safeEqual(token, config.appToken)) return c.json({ error: "unauthorized" }, 401);
+    const body = await c.req.json().catch(() => undefined) as { sessionId?: unknown; reason?: unknown; seconds?: unknown } | undefined;
+    const reason = body?.reason;
+    if (typeof reason !== "string" || !/^[a-z_]{1,40}$/.test(reason)) return c.json({ error: "invalid_reason" }, 400);
+    log("session.ended", {
+      sessionId: typeof body?.sessionId === "string" ? body.sessionId.slice(0, 100) : undefined,
+      reason,
+      seconds: typeof body?.seconds === "number" && Number.isFinite(body.seconds) ? Math.round(body.seconds) : undefined,
+    });
+    return c.body(null, 204);
   });
 
   app.post("/sip/webhook", async (c) => {
