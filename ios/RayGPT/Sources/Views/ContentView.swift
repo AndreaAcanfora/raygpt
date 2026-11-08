@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     let conversation: ConversationController
     @State private var showingSettings = false
+    @State private var showingHistory = false
 
     var body: some View {
         NavigationStack {
@@ -62,6 +63,14 @@ struct ContentView: View {
             .navigationTitle("Raggio")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingHistory = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    .accessibilityLabel("Conversazioni")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showingSettings = true
@@ -74,6 +83,9 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showingSettings) {
                 SettingsView(settings: conversation.settings)
+            }
+            .sheet(isPresented: $showingHistory) {
+                HistoryView(history: ConversationHistory.shared)
             }
         }
     }

@@ -55,6 +55,8 @@ enum ClientEvent {
     case unmute
     /// Context for later replies, not spoken and not interrupting (e.g. the user's new position).
     case thinking(String)
+    /// Context the model says aloud (e.g. a VPS task's outcome, the idle warning).
+    case say(String)
 
     var data: Data {
         let object: [String: Any]
@@ -64,6 +66,9 @@ enum ClientEvent {
         case .unmute: object = ["type": "session.input_audio.unmute"]
         case .thinking(let content):
             object = ["type": "session.thinking.append", "event_id": "ctx_\(UUID().uuidString)",
+                      "delegation_id": NSNull(), "content": content]
+        case .say(let content):
+            object = ["type": "session.commentary.append", "event_id": "say_\(UUID().uuidString)",
                       "delegation_id": NSNull(), "content": content]
         }
         return (try? JSONSerialization.data(withJSONObject: object)) ?? Data()

@@ -108,8 +108,13 @@ diventa un compito per il Claude che gira sul VPS, con il suo browser già logga
 
 - Richiede `OPENAI_WEB_SEARCH_MODEL`: lo strumento passa dallo stesso modello di backend.
 - È OpenAI a chiamare il VPS, con il token come `Authorization: Bearer`; l’app non cambia.
-- Un compito può durare un paio di minuti: se non è finito, RayGPT lo dice e controlla quando
-  gli si chiede “com’è andata?” (`vps_task_status`).
+- Un compito può durare un paio di minuti: lo strumento aspetta 25 secondi, poi RayGPT dice che è
+  in corso. Intanto il client controlla `GET /api/vps/tasks` ogni 4 secondi: la conversazione non
+  si chiude per silenzio mentre il VPS lavora e, appena il compito finisce, il client passa l’esito
+  con `session.commentary.append` e RayGPT lo dice da solo.
+- Ogni nuova conversazione riceve nelle istruzioni un riassunto dei compiti VPS delle ultime 24 ore
+  (se il gateway risponde entro 1,5 secondi), così “continua con l’estensione” ha senso anche dopo
+  una chiusura. Anche il Claude del VPS riprende la sua ultima conversazione quando si riavvia.
 - Con `WEB_SEARCH_VIA=vps` anche le ricerche web le fa il Claude del VPS al posto dello strumento
   `web_search` di OpenAI: niente costo di ricerca OpenAI, ma risposte in 20-60 secondi invece di 5-10.
 - Su Workers l’URL sta in `wrangler.toml`; il token è il secret GitHub `VPS_MCP_TOKEN`, caricato
@@ -128,6 +133,14 @@ Per domande come “una pizzeria qui vicino” il telefono manda la posizione:
 I luoghi vicini li trova lo strumento `nearby` del gateway VPS (OpenStreetMap, circa un secondo).
 Le coordinate non finiscono nei log del backend. Per le chiamate SIP la posizione non c’è.
 
+## Fine della conversazione e storico
+
+- Prima di chiudere per silenzio RayGPT lo dice (“chiudo tra qualche secondo”); se nessuno parla
+  entro 20 secondi chiude. Il silenzio non conta mentre il VPS lavora, durante una delega o con il
+  microfono silenziato.
+- Il client manda il motivo della chiusura a `POST /api/session/end` (evento `session.ended` nei log)
+  e salva la trascrizione sul dispositivo: ultime 50 conversazioni, in “Conversazioni”.
+
 ## Endpoint
 
 | Metodo e percorso | Autenticazione | Scopo |
@@ -136,6 +149,8 @@ Le coordinate non finiscono nei log del backend. Per le chiamate SIP la posizion
 | `GET /api/voices` | — | Voci GPT-Live disponibili e voce predefinita |
 | `POST /api/session` | `Authorization: Bearer <APP_TOKEN>` | Riceve `{ "sdp": "<offer>", "voice": "marin" }`, crea la sessione GPT-Live, restituisce `{ "sessionId", "sdp" }` |
 | `POST /api/place` | `Authorization: Bearer <APP_TOKEN>` | Riceve `{ "location": { "lat", "lon" } }`, restituisce `{ "address", "lat", "lon" }` |
+| `GET /api/vps/tasks?since=<ISO>` | `Authorization: Bearer <APP_TOKEN>` | Compiti del VPS creati da `since` in poi: `{ "tasks": [{ "id", "status", "instruction", "result", "createdAt", "finishedAt" }] }`; 404 senza VPS |
+| `POST /api/session/end` | `Authorization: Bearer <APP_TOKEN>` | Riceve `{ "sessionId", "reason", "seconds" }` e lo registra nei log; risponde 204 |
 | `POST /sip/webhook` | Firma del webhook OpenAI | Strada C: accetta o rifiuta le chiamate in arrivo (`live.transport.incoming`) |
 | `GET /` | — | Pagina web di prova |
 
