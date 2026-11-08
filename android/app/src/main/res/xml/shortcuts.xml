@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the launcher icon, or pin to the home screen: starts or closes a conversation. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_start"
+        android:shortcutId="start"
+        android:shortcutShortLabel="@string/shortcut_start">
+        <intent
+            android:action="com.andreaacanfora.raygpt.action.START"
+            android:targetClass="com.andreaacanfora.raygpt.MainActivity"
+            android:targetPackage="com.andreaacanfora.raygpt" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_stop"
+        android:shortcutId="stop"
+        android:shortcutShortLabel="@string/shortcut_stop">
+        <intent
+            android:action="com.andreaacanfora.raygpt.action.STOP"
+            android:targetClass="com.andreaacanfora.raygpt.MainActivity"
+            android:targetPackage="com.andreaacanfora.raygpt" />
+    </shortcut>
+</shortcuts>
