@@ -18,6 +18,27 @@ struct BackendClient {
         let lon: Double
     }
 
+    /// A task of the VPS agent (GET /api/vps/tasks).
+    struct VpsTask: Decodable {
+        let id: String
+        let status: String
+        let instruction: String
+        let result: String?
+        let createdAt: String
+        let finishedAt: String?
+
+        var isFinished: Bool { status == "done" || status == "failed" }
+        /// The gateway's timestamps carry milliseconds ("2026-11-08T08:40:28.079Z").
+        var finishedDate: Date? {
+            finishedAt.flatMap { try? Date($0, strategy: Date.ISO8601FormatStyle(includingFractionalSeconds: true)) }
+        }
+        var isPending: Bool { status == "queued" || status == "running" }
+    }
+
+    private struct VpsTasks: Decodable {
+        let tasks: [VpsTask]
+    }
+
     private struct ErrorBody: Decodable {
         let error: String
         let message: String?
@@ -32,6 +53,33 @@ struct BackendClient {
     /// Street address of a new position, to tell GPT-Live where the user is now.
     func place(_ location: CLLocation) async throws -> Place {
         try await post("api/place", body: ["location": Self.json(location)], timeout: 8)
+    }
+
+    /// Tasks the VPS agent got since `since`, newest first. Nil when the backend has no VPS.
+    func vpsTasks(since: Date) async throws -> [VpsTask]? {
+        var components = URLComponents(url: baseURL.appendingPathComponent("api/vps/tasks"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "since", value: since.ISO8601Format())]
+        var request = URLRequest(url: components.url!)
+        request.timeoutInterval = 8
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        if status == 404 { return nil }
+        guard status == 200 else { throw BackendError(status: status, code: nil, message: nil) }
+        return try JSONDecoder().decode(VpsTasks.self, from: data).tasks
+    }
+
+    /// Tells the backend why a conversation ended, for its logs. Failures are ignored.
+    func endSession(sessionId: String?, reason: String, seconds: Double) async {
+        var body: [String: Any] = ["reason": reason, "seconds": seconds]
+        if let sessionId { body["sessionId"] = sessionId }
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/session/end"))
+        request.httpMethod = "POST"
+        request.timeoutInterval = 8
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        _ = try? await URLSession.shared.data(for: request)
     }
 
     private static func json(_ location: CLLocation) -> [String: Double] {
