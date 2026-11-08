@@ -11,7 +11,7 @@ object Prompts {
 
     fun vpsTaskFinished(task: VpsTask): String {
         val result = task.result.orEmpty().take(MAX_RESULT_CHARS)
-        val outcome = if (task.status == "failed") "it failed: $result" else result
+        val outcome = (if (task.status == "failed") "it failed: $result" else result).trimEnd('.', ' ', '\n')
         return "The VPS task the user asked for earlier has finished. " +
             "Request: \"${task.instruction.take(MAX_INSTRUCTION_CHARS)}\". Outcome: $outcome. " +
             "Tell the user the outcome now, briefly, in Italian."

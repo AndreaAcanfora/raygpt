@@ -10,7 +10,7 @@ class PromptsTest {
         val text = Prompts.vpsTaskFinished(VpsTask("t1", "done", "riavvia il bot", "Riavviato.", null))
         assertEquals(
             "The VPS task the user asked for earlier has finished. Request: \"riavvia il bot\". " +
-                "Outcome: Riavviato.. Tell the user the outcome now, briefly, in Italian.",
+                "Outcome: Riavviato. Tell the user the outcome now, briefly, in Italian.",
             text,
         )
     }
