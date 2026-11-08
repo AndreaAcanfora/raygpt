@@ -7,6 +7,12 @@ const PRICE_PER_MINUTE_USD = 0.05;
 const CLOSE_TIMEOUT_MS = 3000;
 const ICE_GATHERING_TIMEOUT_MS = 10_000;
 const NEW_LINE_GAP_MS = 1500;
+const VPS_POLL_MS = 4000;
+/** Seconds before the idle limit when the assistant says it is about to close, and the grace after it. */
+const IDLE_WARNING_S = 15;
+const IDLE_GRACE_MS = 20_000;
+const HISTORY_KEY = "raygpt.history";
+const HISTORY_LIMIT = 50;
 
 const $ = (id) => document.getElementById(id);
 const ui = {
@@ -15,6 +21,7 @@ const ui = {
   start: $("start"), mute: $("mute"), stop: $("stop"),
   status: $("status"), stats: $("stats"), transcript: $("transcript"), events: $("events"),
   copyEvents: $("copyEvents"), copyStatus: $("copyStatus"),
+  history: $("history"), historyDetail: $("historyDetail"), clearHistory: $("clearHistory"),
   remote: $("remote"),
 };
 
@@ -23,11 +30,15 @@ let session = null;
 function newSession() {
   return {
     pc: null, dc: null, mic: null, audio: null,
-    clickedAt: performance.now(), startedAt: 0, lastActivityAt: 0,
+    clickedAt: performance.now(), clickedWall: Date.now(), startedAt: 0, lastActivityAt: 0,
     seconds: 0, muted: false, closing: false, timer: null, onClosed: null,
     lastSpeaker: null, lastLine: null, lastDeltaAt: 0,
     lastUserDeltaAt: 0, responseTimes: [],
     token: "", geoWatch: null, sentPosition: null, sentAt: 0,
+    sessionId: null, record: newRecord(),
+    // VPS tasks of this conversation (rules in docs: VPS polling and announcements).
+    vpsTimer: null, vpsBusy: false, delegating: false, lastDelegationEndAt: 0, handled: new Set(),
+    idleWarnedAt: 0,
   };
 }
 
@@ -54,6 +65,12 @@ listMicrophones(localStorage.getItem("raygpt.mic") ?? "");
 ui.stop.addEventListener("click", () => stop("close_requested"));
 ui.mute.addEventListener("click", toggleMute);
 ui.copyEvents.addEventListener("click", copyEvents);
+ui.clearHistory.addEventListener("click", () => {
+  if (!confirm("Eliminare tutte le conversazioni salvate?")) return;
+  writeHistory([]);
+  renderHistory();
+});
+renderHistory();
 
 // --- Session lifecycle -----------------------------------------------------
 
@@ -121,6 +138,7 @@ async function start() {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(describeError(response.status, body));
 
+  session.sessionId = body.sessionId;
   logEvent(`sessione: ${body.sessionId}`);
   await pc.setRemoteDescription({ type: "answer", sdp: body.sdp });
   setStatus("In attesa di GPT-Live…");
@@ -144,6 +162,8 @@ function cleanup(reason) {
   const current = session;
   session = null;
   clearInterval(current.timer);
+  clearInterval(current.vpsTimer);
+  clearTimeout(current.saveTimer);
   if (current.geoWatch !== null) navigator.geolocation.clearWatch(current.geoWatch);
   current.mic?.getTracks().forEach((track) => track.stop());
   current.pc?.close();
@@ -153,6 +173,20 @@ function cleanup(reason) {
   setButtons("idle");
   setStatus(`Chiusa (${describeReason(reason)})`);
   renderStats(current);
+  logEvent(`chiusura: ${reason ?? "sconosciuto"}`);
+  if (current.startedAt) {
+    saveRecord(current, reason ?? "closed");
+    renderHistory();
+  }
+  if (current.sessionId || current.startedAt) {
+    // Fire and forget: the backend logs why the conversation ended.
+    fetch("/api/session/end", {
+      method: "POST",
+      keepalive: true,
+      headers: { Authorization: `Bearer ${current.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: current.sessionId ?? undefined, reason: reason ?? "closed", seconds: current.seconds }),
+    }).catch(() => {});
+  }
 }
 
 // ── Position ────────────────────────────────────────────────────────────
@@ -240,9 +274,11 @@ function handleEvent(event) {
       setStatus("In ascolto: parla pure");
       beep(session.audio, 880, 0.12);
       watchPosition();
+      session.vpsTimer = setInterval(pollVps, VPS_POLL_MS);
       break;
     case "session.input_transcript.delta":
       session.lastUserDeltaAt = now;
+      session.idleWarnedAt = 0;
       appendTranscript("user", event.delta, now);
       if (isStopCommand(session.lastLine?.textContent)) {
         stop("voice_command");
@@ -269,12 +305,16 @@ function handleEvent(event) {
     // Web search delegated to the backend model (OPENAI_WEB_SEARCH_MODEL).
     case "session.delegation.created":
       session.lastActivityAt = now;
+      session.idleWarnedAt = 0;
+      session.delegating = true;
       setStatus("Sto cercando…");
       break;
     case "response.event":
       session.lastActivityAt = now;
       if (["response.completed", "response.failed", "response.incomplete"].includes(event.event?.type)) {
-        setStatus("In ascolto: parla pure");
+        session.delegating = false;
+        session.lastDelegationEndAt = Date.now();
+        setStatus(session.vpsBusy ? "Il VPS sta lavorando…" : "In ascolto: parla pure");
       }
       break;
   }
@@ -285,14 +325,18 @@ function handleEvent(event) {
 
 function appendTranscript(speaker, text, now) {
   if (!text) return;
-  session.lastActivityAt = now;
+  // After the idle warning the assistant's own words must not keep the conversation open.
+  if (speaker === "user" || !session.idleWarnedAt) session.lastActivityAt = now;
   const continues = session.lastSpeaker === speaker && now - session.lastDeltaAt < NEW_LINE_GAP_MS;
   if (!continues || !session.lastLine) {
     session.lastLine = document.createElement("p");
     session.lastLine.className = speaker;
     ui.transcript.append(session.lastLine);
+    session.record.lines.push({ speaker, text: "" });
   }
   session.lastLine.textContent += text;
+  session.record.lines.at(-1).text += text;
+  scheduleSave(session);
   session.lastSpeaker = speaker;
   session.lastDeltaAt = now;
   session.lastLine.scrollIntoView({ block: "end", behavior: "smooth" });
@@ -301,9 +345,142 @@ function appendTranscript(speaker, text, now) {
 function checkLimits() {
   if (!session?.startedAt) return;
   const now = performance.now();
-  if (now - session.lastActivityAt > Number(ui.idle.value) * 1000) stop("idle");
+  // Nobody speaks while the VPS works or a delegation runs: that is not silence.
+  if (session.vpsBusy || session.delegating || session.muted) {
+    session.lastActivityAt = now;
+    session.idleWarnedAt = 0;
+  }
+  const idleMs = Number(ui.idle.value) * 1000;
+  if (session.idleWarnedAt && now - session.idleWarnedAt >= IDLE_GRACE_MS) stop("idle");
   else if (now - session.startedAt > Number(ui.maxMinutes.value) * 60_000) stop("max_duration");
-  else renderStats(session);
+  else {
+    if (!session.idleWarnedAt && now - session.lastActivityAt >= idleMs - IDLE_WARNING_S * 1000) {
+      session.idleWarnedAt = now;
+      say("Tell the user, in one short Italian sentence, that you will close the conversation in a few seconds because nobody is speaking, unless they say something.");
+      logEvent("silenzio: avviso prima della chiusura");
+    }
+    renderStats(session);
+  }
+}
+
+/** Context the model says aloud (unlike thinking.append), e.g. a VPS outcome or the idle warning. */
+function say(content) {
+  if (session?.dc?.readyState !== "open") return;
+  session.dc.send(JSON.stringify({
+    type: "session.commentary.append", event_id: `say_${Date.now()}`, delegation_id: null, content,
+  }));
+}
+
+// ── VPS tasks ───────────────────────────────────────────────────────────
+// A task can outlast the 25 s the VPS tool waits: GPT-Live then only hears "still running".
+// Polling keeps the conversation open meanwhile and has the outcome said when it is ready.
+async function pollVps() {
+  const current = session;
+  if (!current?.startedAt || current.vpsPolling) return;
+  current.vpsPolling = true;
+  try {
+    const since = new Date(current.clickedWall).toISOString();
+    const response = await fetch(`/api/vps/tasks?since=${encodeURIComponent(since)}`, {
+      headers: { Authorization: `Bearer ${current.token}` },
+    });
+    if (response.status === 404) return clearInterval(current.vpsTimer);
+    if (!response.ok || session !== current) return;
+    const { tasks } = await response.json();
+    const busy = tasks.some((t) => t.status === "queued" || t.status === "running");
+    if (busy !== current.vpsBusy) {
+      current.vpsBusy = busy;
+      logEvent(`vps: ${busy ? "al lavoro" : "libero"}`);
+      if (busy) setStatus("Il VPS sta lavorando…");
+      else if (!current.delegating) setStatus("In ascolto: parla pure");
+    }
+    for (const task of tasks) {
+      if ((task.status !== "done" && task.status !== "failed") || current.handled.has(task.id)) continue;
+      if (current.delegating) continue; // the running delegation may still pick it up
+      current.handled.add(task.id);
+      // Finished after the last delegation ended: the model only heard "still running".
+      if (current.lastDelegationEndAt && Date.parse(task.finishedAt) > current.lastDelegationEndAt) {
+        say(announcement(task));
+        current.lastActivityAt = performance.now();
+        current.idleWarnedAt = 0;
+        logEvent(`vps: annunciato l'esito di ${task.id}`);
+      }
+    }
+  } catch (error) {
+    logEvent(`vps: controllo non riuscito (${error.message})`);
+  } finally {
+    current.vpsPolling = false;
+  }
+}
+
+function announcement(task) {
+  const outcome = task.status === "failed" ? `it failed: ${task.result ?? "unknown error"}` : task.result ?? "";
+  return `The VPS task the user asked for earlier has finished. Request: "${task.instruction.slice(0, 200)}". `
+    + `Outcome: ${outcome.slice(0, 1200).replace(/[.\s]+$/, "")}. Tell the user the outcome now, briefly, in Italian.`;
+}
+
+// ── History ─────────────────────────────────────────────────────────────
+// Conversations are kept in this browser (last HISTORY_LIMIT), saved while they run too.
+
+function newRecord() {
+  // Not crypto.randomUUID(): it needs a secure context, and the page may be opened over plain http on a LAN.
+  return { id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`, startedAt: new Date().toISOString(), endedAt: null, reason: null, billedSeconds: 0, lines: [] };
+}
+
+function readHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function writeHistory(records) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(records.slice(0, HISTORY_LIMIT)));
+  } catch {
+    // Storage full or disabled: the history is a convenience, the conversation goes on.
+  }
+}
+
+function saveRecord(current, reason) {
+  if (!current.record.lines.length && !reason) return;
+  const record = { ...current.record, billedSeconds: current.seconds, reason, endedAt: reason ? new Date().toISOString() : null };
+  writeHistory([record, ...readHistory().filter((r) => r.id !== record.id)]);
+}
+
+function scheduleSave(current) {
+  clearTimeout(current.saveTimer);
+  current.saveTimer = setTimeout(() => saveRecord(current, null), 2000);
+}
+
+function renderHistory() {
+  const records = readHistory();
+  ui.history.replaceChildren(...records.map((record) => {
+    const item = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "secondary";
+    const start = new Date(record.startedAt);
+    const minutes = record.endedAt ? Math.max(1, Math.round((Date.parse(record.endedAt) - start) / 60_000)) : null;
+    const first = record.lines.find((l) => l.speaker === "user")?.text.trim() ?? "";
+    button.textContent = `${start.toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}`
+      + `${minutes ? ` · ${minutes} min` : ""} · ${record.reason ? describeReason(record.reason) : "interrotta"}`
+      + `${first ? ` · ${first.slice(0, 60)}` : ""}`;
+    button.addEventListener("click", () => showRecord(record));
+    item.append(button);
+    return item;
+  }));
+  ui.clearHistory.disabled = records.length === 0;
+}
+
+function showRecord(record) {
+  ui.historyDetail.replaceChildren(...record.lines.map((line) => {
+    const p = document.createElement("p");
+    p.className = line.speaker;
+    p.textContent = line.text;
+    return p;
+  }));
+  ui.historyDetail.hidden = false;
 }
 
 // --- Voice commands --------------------------------------------------------
@@ -413,7 +590,7 @@ function describeError(status, body) {
 function describeReason(reason) {
   const reasons = {
     close_requested: "chiusa da te",
-    idle: "silenzio prolungato",
+    idle: "silenzio",
     max_duration: "durata massima raggiunta",
     expired: "sessione scaduta",
     content: "filtro di sicurezza",
@@ -421,6 +598,8 @@ function describeReason(reason) {
     connection_lost: "connessione persa",
     error: "errore",
     voice_command: "comando vocale",
+    call_ended: "chiamata terminata",
+    closed: "chiusa da GPT-Live",
   };
   return reasons[reason] ?? reason ?? "motivo sconosciuto";
 }

@@ -28,6 +28,13 @@
     #transcript p { margin: 6px 0; }
     #transcript .user::before { content: "Tu: "; font-weight: 600; }
     #transcript .assistant::before { content: "RayGPT: "; font-weight: 600; color: var(--accent); }
+    #history { list-style: none; padding: 0; margin: 8px 0; }
+    #history li { margin: 4px 0; }
+    #history button { width: 100%; text-align: left; font-weight: 400; }
+    #historyDetail { border-left: 3px solid var(--line); padding-left: 10px; }
+    #historyDetail p { margin: 6px 0; }
+    #historyDetail .user::before { content: "Tu: "; font-weight: 600; }
+    #historyDetail .assistant::before { content: "RayGPT: "; font-weight: 600; color: var(--accent); }
     details { margin-top: 12px; color: var(--muted); font-size: 0.8rem; }
     .events-bar { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
     .events-bar button { width: auto; font-size: 0.9rem; padding: 8px 14px; }
@@ -73,6 +80,13 @@
   <div id="status">Pronto</div>
   <div id="stats"></div>
   <div id="transcript"></div>
+
+  <details>
+    <summary>Conversazioni</summary>
+    <ol id="history"></ol>
+    <div id="historyDetail" hidden></div>
+    <button id="clearHistory" class="secondary" type="button">Elimina tutto</button>
+  </details>
 
   <details>
     <summary>Eventi (debug)</summary>
